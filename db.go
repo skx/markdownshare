@@ -13,9 +13,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+var PREFIX = "store/"
+
 func filePath(key string) string {
 
-	res := "store/"
+	res := PREFIX
 	res += string(key[0]) + string("/")
 	res += string(key[1]) + "/"
 	res += string(key[2]) + "/"
@@ -26,7 +28,6 @@ func filePath(key string) string {
 
 	res += key
 
-	fmt.Printf("File Path for %s -> %s\n", key, res)
 	return res
 }
 
