@@ -1,5 +1,10 @@
 //
-// This package contains our SQLite DB interface.  It is a little ropy.
+// This package contains our "DB interface"
+//
+// In truth we don't use a database, instead we write to files upon
+// the filesystem, beneath a given prefix.
+//
+// This is easier to backup, inspect, and move.
 //
 
 package main
