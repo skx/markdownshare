@@ -12,9 +12,13 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/go-redis/redis"
+	"github.com/go-redis/redis_rate"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -23,7 +27,15 @@ import (
 	"github.com/shurcooL/github_flavored_markdown"
 )
 
+//
+// Session secret
+//
 var store = sessions.NewCookieStore([]byte("something-very-secret"))
+
+//
+// Rate-limiter
+//
+var rateLimiter *redis_rate.Limiter
 
 //
 // Get the remote IP of the request-submitter.
@@ -46,6 +58,43 @@ func RemoteIP(request *http.Request) string {
 	entries := strings.Split(xForwardedFor, ",")
 	address := strings.TrimSpace(entries[0])
 	return (address)
+}
+
+func AddContext(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		//
+		// Lookup the remote IP and limit to 200/Hour
+		//
+		ip := RemoteIP(r)
+		limit := int64(200)
+
+		//
+		// If we've got a rate-limiter then we can use it.
+		//
+		rate, delay, allowed := rateLimiter.AllowHour(ip, limit)
+
+		h := w.Header()
+
+		//
+		// We'll return the rate-limit headers to the caller.
+		//
+		h.Set("X-RateLimit-Limit", strconv.FormatInt(limit, 10))
+		h.Set("X-RateLimit-IP", ip)
+		h.Set("X-RateLimit-Remaining", strconv.FormatInt(limit-rate, 10))
+		delaySec := int64(delay / time.Second)
+		h.Set("X-RateLimit-Delay", strconv.FormatInt(delaySec, 10))
+
+		//
+		// If the limit has been exceeded tell the client.
+		//
+		if !allowed {
+			http.Error(w, fmt.Sprintf("API rate limit exceeded %d/hour.", limit), 429)
+			return
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
 }
 
 // Render recieves markdown, and returns (safe) HTML.
@@ -719,6 +768,20 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 func main() {
 
 	//
+	// Setup a redis-connection for rate-limiting.
+	//
+	ring := redis.NewRing(&redis.RingOptions{
+		Addrs: map[string]string{
+			"server1": "127.0.0.1:6379",
+		},
+	})
+
+	//
+	// And point the rate-limiter to it
+	//
+	rateLimiter = redis_rate.NewLimiter(ring)
+
+	//
 	// Create a new router and our route-mappings.
 	//
 	router := mux.NewRouter()
@@ -779,9 +842,14 @@ func main() {
 	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
 
 	//
+	// Wire up context (i.e. rate-limiter)
+	//
+	contextRouter := AddContext(loggedRouter)
+
+	//
 	// Launch the server.
 	//
-	err := http.ListenAndServe(bind, loggedRouter)
+	err := http.ListenAndServe(bind, contextRouter)
 	if err != nil {
 		fmt.Printf("\nError: %s\n", err.Error())
 	}
