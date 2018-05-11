@@ -1,12 +1,18 @@
 # markdownshare
 
-This is a golang port of the MarkdownShare.com site.
+This is a golang port of the MarkdownShare.com site, which has been
+updated (in a hurry) to store all uploads upon the filesystem, beneath
+`./store`.
+
+This will be improved in the future, as will the missing test-cases.
+
+More useful content will appear in this `README.md` file over time.
 
 ## Rate-Limiting
 
 All the HTTP-handlers are wrapped, via `Context`, to perform rate-limiting.
 
-This is either evil, or a useful safe-guard depending on whether you hit it or not.
+This is either terrible, or a useful safe-guard depending on whether you hit it or not.
 
 See the various `X-RateLimit` headers in the response to see if you're affected.
 
