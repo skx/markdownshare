@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link type="image/x-icon" rel="icon" href="/favicon.ico" />
+<link rel="stylesheet" type="text/css" href="/css/style.css" />
+<link rel="author" href="/humans.txt" />
+<meta name="description" content="Quick and easy sharing of markdown text" />
+<meta name="keywords" content="markdown, pastebin, markdownsharing, sharing markdown" />
+<title>MarkdownShare : {{.ID}}</title>
+</head>
+<body>
+<div id="wrap">
+<div id="header">
+<h1><a href="/">MarkdownShare.com</a></h1>
+<h2>Quick and easy sharing of markdown text</h2>
+</div>
+<div id="topmenu">
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/api/">API</a></li>
+<li><a href="/create/">Create</a></li>
+<li><a href="/cheatsheet/">CheatSheet</a></li>
+<li><a href="/faq/">FAQ</a></li>
+</ul>
+</div>
+
+<div id="content">
+{{if .Auth}}
+<div style="border: 1px solid red;">
+<p>The following links should be saved for future use - <b>They will not be shown again</b>:</p>
+<ul>
+<li><a href="/delete/{{ .Auth }}">Delete Content</a></li>
+<li><a href="/edit/{{ .Auth }}">Edit Content</a></li>
+</ul>
+</div>
+{{end}}
+{{if .HTML }}
+<blockquote>
+{{ .HTML }}
+      <p style="text-align: right;"><a href="/raw/{{ .ID }}">View the RAW markdown</a>.</p>
+    </blockquote>
+{{else}}
+    <h1>Not Found</h1>
+    <blockquote>
+      <p>The rendered Markdown you were looking for is not here.</p>
+    </blockquote>
+{{end}}
+</div>
+<div class="clear"> </div>
+<div id="footer">
+  <div class="left">
+  </div>
+  <div class="right">
+    Copyright &copy; 2014-2018 by <a href="https://steve.kemp.fi/">Steve Kemp</a>
+  </div>
+  <div class="clear"> </div>
+</div>
+
+</div>
+<script src="/js/k.js" type="text/javascript"></script>
+</body>
+</html>

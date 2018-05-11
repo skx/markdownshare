@@ -1,0 +1,788 @@
+//
+// Hacky solution incoming
+//
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+	"regexp"
+	"strings"
+	"text/template"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
+	"github.com/kyokomi/emoji"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/shurcooL/github_flavored_markdown"
+)
+
+var store = sessions.NewCookieStore([]byte("something-very-secret"))
+
+//
+// Get the remote IP of the request-submitter.
+//
+func RemoteIP(request *http.Request) string {
+
+	//
+	// Get the X-Forwarded-For header, if present.
+	//
+	xForwardedFor := request.Header.Get("X-Forwarded-For")
+
+	//
+	// No forwarded IP?  Then use the remote address directly.
+	//
+	if xForwardedFor == "" {
+		ip, _, _ := net.SplitHostPort(request.RemoteAddr)
+		return ip
+	}
+
+	entries := strings.Split(xForwardedFor, ",")
+	address := strings.TrimSpace(entries[0])
+	return (address)
+}
+
+// Render recieves markdown, and returns (safe) HTML.
+func Render(markdown string) string {
+
+	// Convert the markdown -> html
+	unsafe := github_flavored_markdown.Markdown([]byte(markdown))
+
+	// Escape XSS, etc.
+	html := bluemonday.UGCPolicy().SanitizeBytes(unsafe)
+
+	// This is a bit horrid - but expand the emoji
+	emoji := emoji.Sprint(string(html))
+
+	// And return our rendered output.
+	return (emoji)
+}
+
+// PathHandler serves from our embedded resource(s)
+func PathHandler(res http.ResponseWriter, req *http.Request) {
+
+	//
+	// Get the path, and handle "/" -> "/index.html"
+	//
+	path := req.URL.Path
+	if strings.HasSuffix(path, "/") {
+		path += "index.html"
+	}
+
+	//
+	// Serve from our static-contents
+	//
+	tmpl, err := getResource("data/static" + path)
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	// Content-Type
+	if strings.Contains(path, "html") {
+		res.Header().Set("Content-Type", "text/html")
+	}
+	if strings.Contains(path, ".css") {
+		res.Header().Set("Content-Type", "text/css")
+	}
+	if strings.Contains(path, ".js") {
+		res.Header().Set("Content-Type", "text/javascript")
+	}
+	if strings.Contains(path, ".ico") {
+		res.Header().Set("Content-Type", "image/x-icon")
+	}
+	if strings.Contains(path, ".txt") {
+		res.Header().Set("Content-Type", "text/plain")
+	}
+
+	// Send the output back.
+	fmt.Fprintf(res, "%s", tmpl)
+
+}
+
+// CreateMarkdown is the API end-point the user hits to create a
+// new entry
+func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get our input, if any
+	//
+	req.ParseForm()
+	content := strings.Join(req.Form["text"], "")
+	submit := strings.Join(req.Form["submit"], "")
+
+	//
+	// The data we add to our output-page
+	//
+	type Pagedata struct {
+		HTML    string
+		Content string
+	}
+
+	//
+	// Populate our output page.
+	//
+	var x Pagedata
+	x.HTML = Render(content)
+	x.Content = content
+
+	//
+	// Load our template resource.
+	//
+	tmpl, err := getResource("data/templates/create.tmpl")
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	//  Load our template, from the resource.
+	//
+	src := string(tmpl)
+	t := template.Must(template.New("tmpl").Parse(src))
+
+	//
+	// Now at this point we've got our rendered
+	// HTML - which works for a preview - but if the
+	// user wanted to save then we should do that
+	// instead.
+	//
+	if submit == "Create" && len(content) > 0 {
+
+		//
+		// Add an entry
+		//
+		ip := RemoteIP(req)
+
+		var key string
+		var auth string
+
+		key, auth, err = SaveMarkdown(content, ip)
+		if err != nil {
+			status = http.StatusNotFound
+			return
+		}
+
+		//
+		// Save the data.
+		//
+		session, _ := store.Get(req, "session-name")
+		session.Values["auth"] = auth
+		session.Save(req, res)
+
+		// Now redirect to view
+		//
+		http.Redirect(res, req, "/view/"+key, 302)
+		return
+
+	}
+
+	//
+	// If the user wants to use us programmatically
+	//
+	accept := req.FormValue("accept")
+	if len(accept) < 1 {
+		accept = req.Header.Get("Accept")
+	}
+
+	switch accept {
+	case "application/json":
+		if len(content) < 1 {
+			res.Header().Set("Content-Type", "text/plain")
+			fmt.Fprintf(res, "Empty content")
+			return
+		}
+
+		ip := RemoteIP(req)
+
+		var key string
+		var auth string
+		key, auth, err = SaveMarkdown(content, ip)
+		if err != nil {
+			status = http.StatusNotFound
+			return
+		}
+
+		//
+		// We'll return some JSON to the caller.
+		//
+		tmp := make(map[string]string)
+		tmp["id"] = key
+		tmp["auth"] = auth
+		tmp["link"] = "https://" + req.Host + "/view/" + key
+		tmp["raw"] = "https://" + req.Host + "/raw/" + key
+		tmp["delete"] = "https://" + req.Host + "/delete/" + auth
+		tmp["edit"] = "https://" + req.Host + "/edit/" + auth
+		out, _ := json.MarshalIndent(tmp, "", "     ")
+
+		//
+		// Serve it appropriately
+		//
+		res.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(res, "%s", out)
+		return
+	}
+
+	//
+	// Execute the template into our buffer.
+	//
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, x)
+
+	//
+	// If there were errors, then show them.
+	//
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	// Otherwise write the result.
+	//
+	res.Header().Set("Content-Type", "text/html")
+	buf.WriteTo(res)
+
+}
+
+// EditMarkdownHandler allows a user to edit/update their markdown
+func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get our input, if any
+	//
+	req.ParseForm()
+	content := strings.Join(req.Form["text"], "")
+	submit := strings.Join(req.Form["submit"], "")
+
+	//
+	// Get the authentication-token
+	//
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	//
+	// Ensure we received a parameter.
+	//
+	if len(id) < 1 {
+		status = http.StatusNotFound
+		err = errors.New("Missing 'id' parameter")
+		return
+	}
+
+	//
+	// Ensure the ID is something sensible.
+	//
+	reg, _ := regexp.Compile("^([0-9a-z-]+)$")
+	if !reg.MatchString(id) {
+		status = http.StatusInternalServerError
+		err = errors.New("The authentication-token didn't pass our validation rule")
+		return
+	}
+
+	//
+	// Lookup the value
+	//
+	var key string
+	key, err = KeyFromAuth(id)
+	if err != nil {
+		status = http.StatusNotFound
+		err = errors.New("Invalid authentication-token.")
+		return
+	}
+	if key == "" {
+		status = http.StatusNotFound
+		err = errors.New("The authentication-token was invalid.")
+		return
+	}
+
+	if content == "" {
+		content, err = getMarkdown(key)
+		if err != nil {
+			status = http.StatusNotFound
+			err = errors.New("Markdown not found.")
+			return
+		}
+	}
+
+	//
+	// The data we add to our output-page
+	//
+	type Pagedata struct {
+		HTML    string
+		Content string
+		Key     string
+	}
+
+	//
+	// Populate our output page.
+	//
+	var x Pagedata
+	x.HTML = Render(content)
+	x.Content = content
+	x.Key = id
+
+	//
+	// Load our template resource.
+	//
+	var tmpl []byte
+	tmpl, err = getResource("data/templates/edit.tmpl")
+	if err != nil {
+		status = http.StatusNotFound
+		return
+	}
+
+	//
+	//  Load our template, from the resource.
+	//
+	src := string(tmpl)
+	t := template.Must(template.New("tmpl").Parse(src))
+
+	//
+	// Now at this point we've got our rendered
+	// HTML - which works for a preview - but if the
+	// user wanted to save then we should do that
+	// instead.
+	//
+	if submit == "Update" && len(content) > 0 {
+
+		//
+		// Update the markdown
+		//
+		err = UpdateMarkdown(key, content)
+		if err != nil {
+			return
+		}
+
+		//
+		// Redirect to view
+		//
+		http.Redirect(res, req, "/view/"+key, 302)
+
+		return
+
+	}
+
+	//
+	// Execute the template into our buffer.
+	//
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, x)
+
+	//
+	// If there were errors, then show them.
+	//
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	// Otherwise write the result to the caller.
+	//
+	res.Header().Set("Content-Type", "text/html")
+	buf.WriteTo(res)
+
+}
+
+// DeleteMarkdown removes an entry
+func DeleteMarkdownHandler(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get the authentication-token
+	//
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	//
+	// Ensure we received a parameter.
+	//
+	if len(id) < 1 {
+		status = http.StatusNotFound
+		err = errors.New("Missing 'id' parameter")
+		return
+	}
+
+	//
+	// Ensure the ID is something sensible.
+	//
+	reg, _ := regexp.Compile("^([0-9a-z-]+)$")
+	if !reg.MatchString(id) {
+		status = http.StatusInternalServerError
+		err = errors.New("The authentication-token didn't pass our validation rule")
+		return
+	}
+
+	//
+	// Delete the entry.
+	//
+	err = DeleteMarkdown(id)
+	if err != nil {
+		status = http.StatusInternalServerError
+		return
+	}
+
+	//
+	// Now redirect to the site root
+	//
+	http.Redirect(res, req, "/", 302)
+	return
+}
+
+// ViewMarkdown fetches the text from our database, converts it
+// to HTML and renders it.
+//
+// This is the core of our application.  See ViewRawMarkdown to
+// just display the raw version of the markdown (i.e. non-rendered)
+//
+func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get the ID of the thing we're going to view.
+	//
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	//
+	// Ensure we received a parameter.
+	//
+	if len(id) < 1 {
+		status = http.StatusNotFound
+		err = errors.New("Missing 'id' parameter")
+		return
+	}
+
+	//
+	// Ensure the ID is something sensible.
+	//
+	reg, _ := regexp.Compile("^([0-9a-z-]+)$")
+	if !reg.MatchString(id) {
+		status = http.StatusInternalServerError
+		err = errors.New("The ID didn't pass our validation rule")
+		return
+	}
+
+	//
+	// Get the content.
+	//
+	content, err := getMarkdown(id)
+	if err != nil {
+		status = http.StatusInternalServerError
+		return
+	}
+
+	//
+	// Look for an embedded markdown-resource, if it is present.
+	//
+	if len(content) == 0 {
+		var tmpl []byte
+		tmpl, err = getResource("data/markdown/" + id + ".md")
+		if err != nil {
+			status = http.StatusNotFound
+			err = errors.New("Markdown wasn't found for the given id")
+			return
+		}
+		content = string(tmpl)
+	}
+
+	//
+	// The data we add to our output-page
+	//
+	type Pagedata struct {
+		ID   string
+		HTML string
+		Auth string
+	}
+
+	//
+	// Populate.
+	//
+	var x Pagedata
+	x.ID = id
+	x.HTML = Render(content)
+	x.Auth = ""
+
+	//
+	// Get the auth-value, if present, for the single time it
+	// will be shown.
+	//
+	session, _ := store.Get(req, "session-name")
+	auth := session.Values["auth"]
+	if auth != nil {
+		x.Auth = auth.(string)
+		session.Values["auth"] = ""
+		session.Save(req, res)
+	}
+
+	//
+	// Special-case:
+	//
+	//   /view/xxx -> Shows wrapped markdown in HTML
+	//
+	//   /html/xxx -> Shows unwraped markdown in HTML
+	//
+	if strings.HasPrefix(req.URL.Path, "/html") {
+		str := `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rel="author" href="/humans.txt" />
+<title>` + x.ID + `</title>
+</head>
+<body>` + x.HTML + `</body>
+</html>`
+		res.Header().Set("Content-Type", "text/html")
+
+		fmt.Fprintf(res, str)
+		return
+	}
+
+	//
+	// Load our template resource.
+	//
+	tmpl, err := getResource("data/templates/view.tmpl")
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	//  Load our template, from the resource.
+	//
+	src := string(tmpl)
+	t := template.Must(template.New("tmpl").Parse(src))
+
+	//
+	// Execute the template into our buffer.
+	//
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, x)
+
+	//
+	// If there were errors, then show them.
+	//
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	// Otherwise write the result.
+	//
+	res.Header().Set("Content-Type", "text/html")
+	buf.WriteTo(res)
+}
+
+// ViewRawMarkdown returns the text the user initially added,
+// without rendering it to HTML.
+func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get the ID the user wants to view.
+	//
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	//
+	// Ensure we received a parameter.
+	//
+	if len(id) < 1 {
+		status = http.StatusNotFound
+		err = errors.New("Missing 'id' parameter")
+		return
+	}
+
+	//
+	// Ensure the ID is something sensible.
+	//
+	reg, _ := regexp.Compile("^([0-9a-z-]+)$")
+	if !reg.MatchString(id) {
+		status = http.StatusInternalServerError
+		err = errors.New("The markdown ID didn't pass our validation rule")
+		return
+	}
+
+	//
+	// Get the content.
+	//
+	content, err := getMarkdown(id)
+	if err != nil {
+		status = http.StatusInternalServerError
+		return
+	}
+
+	//
+	// Look for an embedded markdown-resource, if it is present.
+	//
+	if len(content) == 0 {
+		var tmpl []byte
+		tmpl, err = getResource("data/markdown/" + id + ".md")
+		if err != nil {
+			status = http.StatusNotFound
+			err = errors.New("Markdown wasn't found for the given id")
+			return
+		}
+		content = string(tmpl)
+	}
+
+	//
+	// Load our template resource.
+	//
+	tmpl, err := getResource("data/templates/raw.tmpl")
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	//  Load our template, from the resource.
+	//
+	src := string(tmpl)
+	t := template.Must(template.New("tmpl").Parse(src))
+
+	//
+	// Execute the template into our buffer.
+	//
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, content)
+
+	//
+	// If there were errors, then show them.
+	//
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	// Otherwise write the result.
+	//
+	res.Header().Set("Content-Type", "text/plain")
+	buf.WriteTo(res)
+}
+
+//
+//  Entry-point.
+//
+func main() {
+
+	//
+	// Create a new router and our route-mappings.
+	//
+	router := mux.NewRouter()
+
+	//
+	// Create.
+	//
+	//
+	router.HandleFunc("/create/", CreateMarkdownHandler).Methods("GET")
+	router.HandleFunc("/create", CreateMarkdownHandler).Methods("GET")
+	router.HandleFunc("/create/", CreateMarkdownHandler).Methods("POST")
+	router.HandleFunc("/create", CreateMarkdownHandler).Methods("POST")
+
+	//
+	// Edit.
+	//
+	router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("GET")
+	router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("POST")
+	router.HandleFunc("/edit/{id}/", EditMarkdownHandler).Methods("GET")
+	router.HandleFunc("/edit/{id}/", EditMarkdownHandler).Methods("POST")
+
+	//
+	// Delete.
+	//
+	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandler).Methods("GET")
+	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("GET")
+
+	//
+	// View.
+	//
+	router.HandleFunc("/view/{id}/", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/view/{id}", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/html/{id}/", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/html/{id}", ViewMarkdownHandler).Methods("GET")
+
+	router.HandleFunc("/raw/{id}/", ViewRawMarkdownHandler).Methods("GET")
+	router.HandleFunc("/raw/{id}", ViewRawMarkdownHandler).Methods("GET")
+
+	//
+	// Static files
+	//
+	router.NotFoundHandler = http.HandlerFunc(PathHandler)
+
+	//
+	// Bind the router.
+	//
+	http.Handle("/", router)
+
+	//
+	// Show where we'll bind
+	//
+	bind := fmt.Sprintf("%s:%d", "127.0.0.1", 3737)
+	fmt.Printf("Launching the server on http://%s\n", bind)
+
+	//
+	// Wire up logging.
+	//
+	loggedRouter := handlers.LoggingHandler(os.Stdout, router)
+
+	//
+	// Launch the server.
+	//
+	err := http.ListenAndServe(bind, loggedRouter)
+	if err != nil {
+		fmt.Printf("\nError: %s\n", err.Error())
+	}
+}
