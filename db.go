@@ -5,105 +5,69 @@
 package main
 
 import (
-	"database/sql"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"os"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/satori/go.uuid"
 )
 
+func filePath(key string) string {
+
+	res := "store/"
+	res += string(key[0]) + string("/")
+	res += string(key[1]) + "/"
+	res += string(key[2]) + "/"
+	res += string(key[3]) + "/"
+
+	// Make this when before we read-write
+	os.MkdirAll(res, 0755)
+
+	res += key
+
+	fmt.Printf("File Path for %s -> %s\n", key, res)
+	return res
+}
+
+func readFile(key string) (string, error) {
+	res, err := ioutil.ReadFile(filePath(key))
+	if err != nil {
+		return "", errors.New("Markdown not found")
+	}
+	return string(res), err
+}
+
+func writeFile(key string, data string) error {
+	err := ioutil.WriteFile(filePath(key), []byte(data), 0644)
+	if err != nil {
+		fmt.Printf("ERROR WRITING: %s\n", err.Error())
+	}
+	return err
+}
+
 // getMarkdown returns the markdown from the given public-key.
 func getMarkdown(key string) (string, error) {
-	var db *sql.DB
-	var err error
-
-	//
-	// Return if the database already exists.
-	//
-	db, err = sql.Open("sqlite3", "predis.db")
-	if err != nil {
-		return "", err
-	}
-	defer db.Close()
-
-	var out string
-	row := db.QueryRow("SELECT val FROM string WHERE key=?",
-		"MARKDOWN:"+key+":TEXT")
-	err = row.Scan(&out)
-
-	switch {
-	case err == sql.ErrNoRows:
-	case err != nil:
-		return "", errors.New("Markdown not found")
-	default:
-	}
-
+	out, _ := readFile(key + ".TEXT")
 	return out, nil
 }
 
 // KeyFromAuth returns the public-key from the (private) auth-token
 // it is used for Delete/Edit operations
 func KeyFromAuth(auth string) (string, error) {
-	db, err := sql.Open("sqlite3", "predis.db")
-	if err != nil {
-		return "", err
-	}
-	defer db.Close()
-
-	//
-	// Find the public-ID which corresponds to the auth-key
-	//
-	var key string
-	row := db.QueryRow("SELECT val FROM string WHERE key=?", "MARKDOWN:KEY:"+auth)
-	err = row.Scan(&key)
-
-	switch {
-	case err == sql.ErrNoRows:
-	case err != nil:
-		return "", errors.New("Invalid authentication token")
-	}
-	return key, nil
+	return (readFile(auth))
 
 }
 
 // UpdateMarkdown updates the text associated with the given
 // key - and is only called as a result of an edit operation.
 func UpdateMarkdown(key string, markdown string) error {
-
-	db, err := sql.Open("sqlite3", "predis.db")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	// The query we run
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	up, err := tx.Prepare("UPDATE string SET val=? WHERE key=?")
-	if err != nil {
-		return err
-	}
-
-	_, err = up.Exec(markdown, "MARKDOWN:"+key+":TEXT")
-	if err != nil {
-		return err
-	}
-	tx.Commit()
-
-	return nil
+	return (writeFile(key+".TEXT", markdown))
 }
 
 // SaveMarkdown adds a new database entry, recording the text
 // and the IP address of the submitter.
 func SaveMarkdown(markdown string, ip string) (string, string, error) {
-
-	db, err := sql.Open("sqlite3", "predis.db")
-	if err != nil {
-		return "", "", err
-	}
-	defer db.Close()
 
 	// Generate the auth cookie
 	var auth string
@@ -121,23 +85,10 @@ func SaveMarkdown(markdown string, ip string) (string, string, error) {
 	}
 	key = u2.String()
 
-	tx, err := db.Begin()
-	if err != nil {
-		return "", "", err
-	}
+	writeFile(key+".TEXT", markdown)
+	writeFile(key+".IP", ip)
+	writeFile(auth, key)
 
-	stmt, err := tx.Prepare("INSERT INTO string (key,val) VALUES(?,?)")
-	if err != nil {
-		return "", "", err
-	}
-	defer stmt.Close()
-
-	stmt.Exec("MARKDOWN:"+key+":TEXT", markdown)
-	stmt.Exec("MARKDOWN:"+key+":IP", ip)
-	stmt.Exec("MARKDOWN:"+key+":AUTH", auth)
-	stmt.Exec("MARKDOWN:KEY:"+auth, key)
-
-	tx.Commit()
 	return key, auth, nil
 }
 
@@ -150,28 +101,18 @@ func DeleteMarkdown(auth string) error {
 		return err
 	}
 
-	var db *sql.DB
-	db, err = sql.Open("sqlite3", "predis.db")
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
 	//
-	// OK now we've got a list of things to delete
+	// These are the files we should delete
 	//
 	queries := []string{
-		"DELETE FROM string where key='MARKDOWN:" + key + ":TEXT'",
-		"DELETE FROM string where key='MARKDOWN:" + key + ":IP'",
-		"DELETE FROM string where key='MARKDOWN:" + key + ":AUTH'",
-		"DELETE FROM string where key='MARKDOWN:KEY:" + auth + "'",
+		filePath(key) + ".TEXT",
+		filePath(key) + ".IP",
+		filePath(key) + ".AUTH",
+		filePath(auth),
 	}
 
 	for _, ent := range queries {
-		_, err = db.Exec(ent)
-		if err != nil {
-			return err
-		}
+		os.Remove(ent)
 	}
 
 	return nil

@@ -20,4 +20,4 @@ Bugs:
 
 Todo:
 
-* Drop Redis/SQLite in favour of the filesystem?
+* [x] Drop Redis/SQLite in favour of the filesystem?
