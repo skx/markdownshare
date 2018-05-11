@@ -20,6 +20,9 @@ import (
 
 var PREFIX = "store/"
 
+// filePath converts a key into a nested set of directories.
+//
+// This is done to avoid having millions of files in a single directory.
 func filePath(key string) string {
 
 	res := PREFIX
@@ -36,6 +39,7 @@ func filePath(key string) string {
 	return res
 }
 
+// readFile reads the contents of a given file.
 func readFile(key string) (string, error) {
 	res, err := ioutil.ReadFile(filePath(key))
 	if err != nil {
@@ -44,6 +48,7 @@ func readFile(key string) (string, error) {
 	return string(res), err
 }
 
+// writeFile writes the given data to the specified file.
 func writeFile(key string, data string) error {
 	err := ioutil.WriteFile(filePath(key), []byte(data), 0644)
 	if err != nil {
