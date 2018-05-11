@@ -2,6 +2,15 @@
 
 This is a golang port of the MarkdownShare.com site.
 
+## Rate-Limiting
+
+All the HTTP-handlers are wrapped, via `Context`, to perform rate-limiting.
+
+This is either evil, or a useful safe-guard depending on whether you hit it or not.
+
+See the various `X-RateLimit` headers in the response to see if you're affected.
+
+
 ## Notes
 
 The generated HTML views are stored inside the compiled binary to ease
