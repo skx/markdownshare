@@ -92,13 +92,16 @@ func AddContext(next http.Handler) http.Handler {
 		if !allowed {
 			http.Error(w, fmt.Sprintf("API rate limit exceeded %d/hour.", limit), 429)
 			return
-		} else {
-			next.ServeHTTP(w, r)
 		}
+
+		//
+		// Otherwise invoke the wrapped-handler.
+		//
+		next.ServeHTTP(w, r)
 	})
 }
 
-// Render recieves markdown, and returns (safe) HTML.
+// Render receives markdown, and returns (safe) HTML.
 func Render(markdown string) string {
 
 	// Convert the markdown -> html
