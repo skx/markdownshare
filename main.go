@@ -512,10 +512,10 @@ func DeleteMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	return
 }
 
-// ViewMarkdown fetches the text from our database, converts it
+// ViewMarkdownHandler fetches the text from our database, converts it
 // to HTML and renders it.
 //
-// This is the core of our application.  See ViewRawMarkdown to
+// This is the core of our application.  See ViewRawMarkdownHandler to
 // just display the raw version of the markdown (i.e. non-rendered)
 //
 func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
@@ -666,7 +666,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	buf.WriteTo(res)
 }
 
-// ViewRawMarkdown returns the text the user initially added,
+// ViewRawMarkdownHandler returns the text the user initially added,
 // without rendering it to HTML.
 func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	var (
