@@ -37,9 +37,8 @@ var store = sessions.NewCookieStore([]byte("something-very-secret"))
 //
 var rateLimiter *redis_rate.Limiter
 
-//
-// Get the remote IP of the request-submitter.
-//
+// RemoteIP retrieves the remote IP of the request-submitter, taking
+// account of any X-Forwarded-For header that might be submitted.
 func RemoteIP(request *http.Request) string {
 
 	//
@@ -60,6 +59,8 @@ func RemoteIP(request *http.Request) string {
 	return (address)
 }
 
+// AddContext adds a wrapper around all of our HTTP-methods, such that
+// rate-limiting will be invoked.
 func AddContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -155,7 +156,7 @@ func PathHandler(res http.ResponseWriter, req *http.Request) {
 
 }
 
-// CreateMarkdown is the API end-point the user hits to create a
+// CreateMarkdownHandler is the API end-point the user hits to create a
 // new entry
 func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	var (
@@ -309,7 +310,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 
 }
 
-// EditMarkdownHandler allows a user to edit/update their markdown
+// EditMarkdownHandler allows a user to edit/update their markdown.
 func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	var (
 		status int
@@ -458,7 +459,7 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 
 }
 
-// DeleteMarkdown removes an entry
+// DeleteMarkdownHandler removes an entry.
 func DeleteMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	var (
 		status int

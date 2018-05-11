@@ -18,6 +18,11 @@ import (
 	"github.com/satori/go.uuid"
 )
 
+// PREFIX is the prefix beneath which all our files are stored.
+//
+// This is a variable such that it can be updated for testing, there
+// are currently no command-line arguments to change it, etc.
+//
 var PREFIX = "store/"
 
 // filePath converts a key into a nested set of directories.
