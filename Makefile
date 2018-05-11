@@ -49,7 +49,7 @@ test:
 # Clean our build
 #
 clean:
-	rm markdownshare || true
+	rm -f markdownshare cover.out fmt foo.html || true
 
 #
 # Generate a HTML coverage-report.
