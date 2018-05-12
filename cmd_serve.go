@@ -555,7 +555,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	reg, _ := regexp.Compile("^([0-9a-z-]+)$")
 	if !reg.MatchString(id) {
 		status = http.StatusInternalServerError
-		err = errors.New("The ID didn't pass our validation rule")
+		err = errors.New("The markdown ID didn't pass our validation rule")
 		return
 	}
 

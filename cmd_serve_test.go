@@ -216,6 +216,46 @@ func TestMissingID(t *testing.T) {
 
 }
 
+// Test invalid IDs
+func TestBogusID(t *testing.T) {
+
+	router := mux.NewRouter()
+	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("GET")
+	router.HandleFunc("/html/{id}", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/raw/{id}", ViewRawMarkdownHandler).Methods("GET")
+	router.HandleFunc("/view/{id}", ViewMarkdownHandler).Methods("GET")
+
+	// Some bogus IDS
+	tests := []string{
+		"/delete/$(id)",
+		"/html/`uptime`",
+		"/raw/;",
+		"/view/xx:yy",
+	}
+
+	for _, uri := range tests {
+		req, err := http.NewRequest("GET", uri, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+
+		// Check the status code is what we expect.
+		if status := rr.Code; status != http.StatusInternalServerError {
+			t.Errorf("Unexpected status-code: %v", status)
+		}
+
+		// Check the response body is what we expect.
+		if !strings.Contains(rr.Body.String(), "validation rule") {
+			t.Errorf("handler returned unexpected body -  %s",
+				rr.Body.String())
+		}
+	}
+
+}
+
 // This function tries to test uploading a piece of text, to test
 // the preview - but not the saving - of markdown.
 func TestPreview(t *testing.T) {
