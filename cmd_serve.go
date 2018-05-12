@@ -6,8 +6,10 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"net"
 	"net/http"
@@ -20,6 +22,7 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/go-redis/redis_rate"
+	"github.com/google/subcommands"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
@@ -765,9 +768,36 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 }
 
 //
-//  Entry-point.
+// The options set by our command-line flags.
 //
-func main() {
+type serveCmd struct {
+	bindHost string
+	bindPort int
+}
+
+//
+// Glue
+//
+func (*serveCmd) Name() string     { return "serve" }
+func (*serveCmd) Synopsis() string { return "Launch the HTTP server." }
+func (*serveCmd) Usage() string {
+	return `serve [options]:
+  Launch the HTTP server for receiving reports & viewing them
+`
+}
+
+//
+// Flag setup
+//
+func (p *serveCmd) SetFlags(f *flag.FlagSet) {
+	f.IntVar(&p.bindPort, "port", 3737, "The port to bind upon.")
+	f.StringVar(&p.bindHost, "host", "127.0.0.1", "The IP to listen upon.")
+}
+
+//
+// Entry-point.
+//
+func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 
 	//
 	// Setup a redis-connection for rate-limiting.
@@ -858,4 +888,9 @@ func main() {
 	if err != nil {
 		fmt.Printf("\nError: %s\n", err.Error())
 	}
+
+	//
+	// All done.
+	//
+	return subcommands.ExitSuccess
 }
