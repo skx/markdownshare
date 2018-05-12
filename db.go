@@ -99,6 +99,7 @@ func SaveMarkdown(markdown string, ip string) (string, string, error) {
 
 	writeFile(key+".TEXT", markdown)
 	writeFile(key+".IP", ip)
+	writeFile(key+".AUTH", auth)
 	writeFile(auth, key)
 
 	return key, auth, nil

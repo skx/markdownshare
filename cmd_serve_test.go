@@ -378,12 +378,40 @@ func TestCreateAndView(t *testing.T) {
 		t.Errorf("Redirection target looks bogus")
 	}
 
-	// OK now try to get that markdown.
+	// OK now try to get that markdown - via the lookup not
+	// a HTTP-fetch right now.
 	target = strings.TrimPrefix(target, "/view/")
 	markdown, _ := getMarkdown(target)
 
+	//
+	// Should have raw markdown.
+	//
 	if !strings.Contains(markdown, "(https://steve.fi/)") {
 		t.Errorf("Markdown didn't look correct: %s\n", markdown)
+	}
+
+	//
+	// Secondly try to fetch via the HTTP-handler
+	//
+	router := mux.NewRouter()
+	router.HandleFunc("/view/{id}", ViewMarkdownHandler).Methods("GET")
+
+	req, err = http.NewRequest("GET", "/view/"+target, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != http.StatusOK && status != http.StatusNotFound {
+		t.Errorf("Unexpected status-code: %v", status)
+	}
+
+	// Check the response body is what we expect.
+	if !strings.Contains(rr.Body.String(), "href=\"https://steve.fi/\" rel=\"nofollow") {
+		t.Errorf("handler returned unexpected body: %s", rr.Body.String())
 	}
 
 	//
@@ -392,8 +420,106 @@ func TestCreateAndView(t *testing.T) {
 	os.RemoveAll(p)
 }
 
-// Test Create + View
+// Test creating & deleting markdown.
+func TestCreateAndDelete(t *testing.T) {
 
-// Test Create + Delete
+	//
+	// Create a temporary directory to store uploads
+	//
+	p, err := ioutil.TempDir(os.TempDir(), "apiupload")
+	if err == nil {
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
+	}
 
-// Test delete missing entry
+	data := url.Values{}
+	data.Set("text", "[steve.fi](https://steve.fi/)")
+	data.Set("submit", "Create")
+
+	req, err := http.NewRequest("POST", "/create", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	//
+	// Record via the handler.
+	//
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(CreateMarkdownHandler)
+
+	// Our handlers satisfy http.Handler, so we can call
+	// their ServeHTTP method directly and pass in our
+	// Request and ResponseRecorder.
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != 302 {
+		t.Errorf("Unexpected status-code: %v", status)
+	}
+
+	// Check the redirection target starts with /view/
+	target := rr.HeaderMap.Get("Location")
+	if !strings.HasPrefix(target, "/view") {
+		t.Errorf("Redirection target looks bogus")
+	}
+
+	// OK now try to get that markdown - via the lookup not
+	// a HTTP-fetch right now.
+	target = strings.TrimPrefix(target, "/view/")
+	markdown, err := getMarkdown(target)
+	if err != nil {
+		t.Errorf("Didn't expect an error fetching markdown")
+	}
+
+	//
+	// Should have raw markdown.
+	//
+	if !strings.Contains(markdown, "(https://steve.fi/)") {
+		t.Errorf("Markdown didn't look correct: %s\n", markdown)
+	}
+
+	//
+	// Now we delete the markdown.
+	//
+	// We have to check to get the authentication-token, which
+	// would have been set via a cookie.
+	//
+	token, _ := readFile(target + ".AUTH")
+
+	//
+	// Make the deletion request
+	//
+	router := mux.NewRouter()
+	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("GET")
+	req, err = http.NewRequest("GET", "/delete/"+token, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	router.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != 302 {
+		t.Errorf("Unexpected status-code: %v", status)
+	}
+
+	//
+	// At this point re-fetching the body should fail.
+	//
+	markdown, err = getMarkdown(target)
+	if markdown != "" {
+		t.Errorf("Expected deleted markdown to be empty - got %s\n", markdown)
+	}
+	if err != nil {
+		t.Errorf("expected an error fetching markdown")
+	}
+
+	//
+	// Cleanup our temporary directory
+	//
+	os.RemoveAll(p)
+}
