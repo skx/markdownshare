@@ -101,6 +101,8 @@ func TestKonamiCode(t *testing.T) {
 	router.HandleFunc("/view/{id}", ViewMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/{id}/", ViewMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/{id}", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/raw/{id}/", ViewRawMarkdownHandler).Methods("GET")
+	router.HandleFunc("/raw/{id}", ViewRawMarkdownHandler).Methods("GET")
 
 	type TestCase struct {
 		URL    string
@@ -113,6 +115,8 @@ func TestKonamiCode(t *testing.T) {
 		{"/view/konami2/", "wasn't found for the given id"},
 		{"/html/konami", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"},
 		{"/html/konami/", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"},
+		{"/raw/konami", "the [Konami Code](http://en.wikipedia"},
+		{"/raw/konami/", "the [Konami Code](http://en.wikipedia"},
 	}
 
 	for _, entry := range tests {
