@@ -15,13 +15,13 @@ Initial stab:
 
 Bugs:
 
-* Edit of a deleted entry seems to work.
+* [x] Edit of a deleted entry initially worked, now resolved.
 
 
 Todo:
 
 * [x] Drop Redis/SQLite in favour of the filesystem?
-
 * [x] Add badges + readme updates
-
 * [ ] Add more test-coverage
+* [ ] Make redis-based rate-limiting optional
+* [ ] Add subcommand to show recent uploads
