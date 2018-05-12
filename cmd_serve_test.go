@@ -212,7 +212,6 @@ func TestViewMissingID(t *testing.T) {
 
 }
 
-
 // This function tries to test uploading a piece of text, to test
 // the preview - but not the saving - of markdown.
 func TestPreview(t *testing.T) {
@@ -261,11 +260,10 @@ func TestPreview(t *testing.T) {
 		t.Errorf("Unexpected status-code: %v", status)
 	}
 
-	// Check the response body contains the rendered markdown we
-	// submitted.
-	if !strings.Contains( rr.Body.String(), "<p><strong>bold</strong></p>" ) {
+	// Check the response body contains the rendered markdown.
+	if !strings.Contains(rr.Body.String(), "<p><strong>bold</strong></p>") {
 		t.Errorf("handler returned unexpected body: got '%v'",
-			rr.Body.String() )
+			rr.Body.String())
 	}
 
 	//
@@ -273,7 +271,6 @@ func TestPreview(t *testing.T) {
 	//
 	os.RemoveAll(p)
 }
-
 
 // Test uploading markdown via the API-method, which should return JSON.
 //
@@ -320,13 +317,73 @@ func TestAPICreate(t *testing.T) {
 
 	// Check the response body contains the rendered markdown we
 	// submitted.
-	if !strings.Contains( rr.Body.String(), "\"link\":" ) {
+	if !strings.Contains(rr.Body.String(), "\"link\":") {
 		t.Errorf("handler returned unexpected body: got '%v'",
-			rr.Body.String() )
+			rr.Body.String())
 	}
 
 	if ctype := rr.Header().Get("Content-Type"); ctype != "application/json" {
 		t.Errorf("Content-Type was not JSON: %s", ctype)
+	}
+
+	//
+	// Cleanup our temporary directory
+	//
+	os.RemoveAll(p)
+}
+
+// Test creating & fetching markdown.
+func TestCreateAndView(t *testing.T) {
+
+	//
+	// Create a temporary directory to store uploads
+	//
+	p, err := ioutil.TempDir(os.TempDir(), "apiupload")
+	if err == nil {
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
+	}
+
+	data := url.Values{}
+	data.Set("text", "[steve.fi](https://steve.fi/)")
+	data.Set("submit", "Create")
+
+	req, err := http.NewRequest("POST", "/create", bytes.NewBufferString(data.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+	//
+	// Record via the handler.
+	//
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(CreateMarkdownHandler)
+
+	// Our handlers satisfy http.Handler, so we can call
+	// their ServeHTTP method directly and pass in our
+	// Request and ResponseRecorder.
+	handler.ServeHTTP(rr, req)
+
+	// Check the status code is what we expect.
+	if status := rr.Code; status != 302 {
+		t.Errorf("Unexpected status-code: %v", status)
+	}
+
+	// Check the redirection target starts with /view/
+	target := rr.HeaderMap.Get("Location")
+	if !strings.HasPrefix(target, "/view") {
+		t.Errorf("Redirection target looks bogus")
+	}
+
+	// OK now try to get that markdown.
+	target = strings.TrimPrefix(target, "/view/")
+	markdown, _ := getMarkdown(target)
+
+	if !strings.Contains(markdown, "(https://steve.fi/)") {
+		t.Errorf("Markdown didn't look correct: %s\n", markdown)
 	}
 
 	//
