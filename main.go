@@ -1,6 +1,7 @@
 //
 // Hacky solution incoming
 //
+
 package main
 
 import (
