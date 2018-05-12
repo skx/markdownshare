@@ -533,7 +533,7 @@ func TestCreateAndDelete(t *testing.T) {
 	//
 	// Now we delete the markdown.
 	//
-	// We have to check to get the authentication-token, which
+	// We have to cheat to get the authentication-token, which
 	// would have been set via a cookie.
 	//
 	token, _ := readFile(target + ".AUTH")
@@ -562,6 +562,119 @@ func TestCreateAndDelete(t *testing.T) {
 	markdown = getMarkdown(target)
 	if markdown != "" {
 		t.Errorf("Expected deleted markdown to be empty - got %s\n", markdown)
+	}
+
+	//
+	// Cleanup our temporary directory
+	//
+	os.RemoveAll(p)
+}
+
+// Test creating & previewing an edit to some markdown.
+func TestCreateAndEditPreview(t *testing.T) {
+
+	//
+	// Create a temporary directory to store uploads
+	//
+	p, err := ioutil.TempDir(os.TempDir(), "tcaep")
+	if err == nil {
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
+	}
+
+	// Auth-token, post-create.
+	var token string
+
+	// Scope the create-code
+	{
+		data := url.Values{}
+		data.Set("text", "[steve.fi](https://steve.fi/)")
+		data.Set("submit", "Create")
+
+		req, err := http.NewRequest("POST", "/create", bytes.NewBufferString(data.Encode()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+		//
+		// Record via the handler.
+		//
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(CreateMarkdownHandler)
+
+		// Our handlers satisfy http.Handler, so we can call
+		// their ServeHTTP method directly and pass in our
+		// Request and ResponseRecorder.
+		handler.ServeHTTP(rr, req)
+
+		// Check the status code is what we expect.
+		if status := rr.Code; status != 302 {
+			t.Errorf("Unexpected status-code: %v", status)
+		}
+
+		// Check the redirection target starts with /view/
+		target := rr.HeaderMap.Get("Location")
+		if !strings.HasPrefix(target, "/view") {
+			t.Errorf("Redirection target looks bogus")
+		}
+
+		// OK now try to get that markdown - via the lookup not
+		// a HTTP-fetch right now.
+		view := strings.TrimPrefix(target, "/view/")
+		markdown := getMarkdown(view)
+
+		//
+		// Should have raw markdown.
+		//
+		if !strings.Contains(markdown, "(https://steve.fi/)") {
+			t.Errorf("Markdown didn't look correct: %s\n", markdown)
+		}
+
+		//
+		// Now we've created it, and we have the view-token, we have to
+		// cheat to get the authentication-token, which would have been
+		// set via a cookie.
+		//
+		token, _ = readFile(view + ".AUTH")
+	}
+
+	// Scope the edit-code
+	{
+		//
+		// Make a POST to the edit-end point, but don't send the magical
+		// submit parameter.
+		//
+		// The intention is that we'll be previewing our edit change.
+		//
+		data := url.Values{}
+		data.Set("text", "[Steve Kemp](https://steve.kemp.fi/)")
+		data.Set("submit", "Preview")
+
+		router := mux.NewRouter()
+		router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("POST")
+
+		req, err := http.NewRequest("POST", "/edit/"+token, bytes.NewBufferString(data.Encode()))
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
+
+		rr := httptest.NewRecorder()
+		router.ServeHTTP(rr, req)
+
+		// Check the status code is what we expect.
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("Unexpected status-code: %v", status)
+
+		}
+
+		if !strings.Contains(rr.Body.String(), "href=\"https://steve.kemp.fi/\" rel=\"nofollow") {
+			t.Errorf("Edit preview seems to have failed")
+		}
 	}
 
 	//
