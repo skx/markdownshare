@@ -22,14 +22,14 @@ import (
 // This is a variable such that it can be updated for testing, there
 // are currently no command-line arguments to change it, etc.
 //
-var PREFIX = "store/"
+var PREFIX = "store"
 
 // filePath converts a key into a nested set of directories.
 //
 // This is done to avoid having millions of files in a single directory.
 func filePath(key string) string {
 
-	res := PREFIX
+	res := PREFIX + "/"
 	res += string(key[0]) + string("/")
 	res += string(key[1]) + "/"
 	res += string(key[2]) + "/"
