@@ -6,13 +6,16 @@
 
 # markdownshare
 
-This is a golang port of the MarkdownShare.com site, which has been
-updated (in a hurry) to store all uploads upon the filesystem, beneath
-`./store`.
+Markdownshare is the code which is behind [markdownshare.com](https://markdownshare.com/), which is essentially a pastebin site which happens to transform markdown into a HTML.
 
-This will be improved in the future, as will the missing test-cases.
 
-More useful content will appear in this `README.md` file over time.
+## Storage
+
+Initially all user-data was stored in a local [Redis](https://redis.io/) database, but over time I've started to prefer to use redis only for transient/session-data - so the contents were moved to a local SQLite database.
+
+Due to issues with embedding SQLite in golang I've now moved to storing data
+upon the filesystem, beneath a common prefix, which is slightly less efficient
+but still good enough for the volume of users I see.
 
 ## Rate-Limiting
 
@@ -42,7 +45,7 @@ binary to make your changes:
     implant -input data/ -output static.go
     go build .
 
-
+(A simple `make` should do the correct thing upon a GNU/Linux host.)
 
 Steve
 --
