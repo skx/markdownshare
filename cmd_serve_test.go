@@ -177,16 +177,20 @@ func TestViewInvalidID(t *testing.T) {
 }
 
 // Test ID is present
-func TestViewMissingID(t *testing.T) {
+func TestMissingID(t *testing.T) {
 
 	router := mux.NewRouter()
-	router.HandleFunc("/view/", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/delete/", DeleteMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/", ViewMarkdownHandler).Methods("GET")
+	router.HandleFunc("/raw/", ViewRawMarkdownHandler).Methods("GET")
+	router.HandleFunc("/view/", ViewMarkdownHandler).Methods("GET")
 
 	// Some bogus IDS
 	tests := []string{
-		"/view/",
+		"/delete/",
 		"/html/",
+		"/raw/",
+		"/view/",
 	}
 
 	for _, uri := range tests {
