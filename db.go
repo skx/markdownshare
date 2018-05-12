@@ -11,7 +11,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -56,9 +55,6 @@ func readFile(key string) (string, error) {
 // writeFile writes the given data to the specified file.
 func writeFile(key string, data string) error {
 	err := ioutil.WriteFile(filePath(key), []byte(data), 0644)
-	if err != nil {
-		fmt.Printf("ERROR WRITING: %s\n", err.Error())
-	}
 	return err
 }
 

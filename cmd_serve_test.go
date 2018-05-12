@@ -391,3 +391,9 @@ func TestCreateAndView(t *testing.T) {
 	//
 	os.RemoveAll(p)
 }
+
+// Test Create + View
+
+// Test Create + Delete
+
+// Test delete missing entry
