@@ -199,7 +199,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	tmpl, err := getResource("data/templates/create.tmpl")
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -301,7 +301,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	// If there were errors, then show them.
 	//
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -435,9 +435,7 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 		// Redirect to view
 		//
 		http.Redirect(res, req, "/view/"+key, 302)
-
 		return
-
 	}
 
 	//
@@ -614,7 +612,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	//   /view/xxx -> Shows wrapped markdown in HTML
 	//
-	//   /html/xxx -> Shows unwraped markdown in HTML
+	//   /html/xxx -> Shows unwrapped markdown in HTML
 	//
 	if strings.HasPrefix(req.URL.Path, "/html") {
 		str := `<?xml version="1.0" encoding="UTF-8"?>
@@ -628,7 +626,6 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 <body>` + x.HTML + `</body>
 </html>`
 		res.Header().Set("Content-Type", "text/html")
-
 		fmt.Fprintf(res, str)
 		return
 	}
@@ -638,7 +635,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	tmpl, err := getResource("data/templates/view.tmpl")
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -658,7 +655,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	// If there were errors, then show them.
 	//
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -735,7 +732,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	tmpl, err := getResource("data/templates/raw.tmpl")
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -755,7 +752,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	// If there were errors, then show them.
 	//
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+		status = http.StatusNotFound
 		return
 	}
 
@@ -821,11 +818,14 @@ func main() {
 	router.HandleFunc("/html/{id}/", ViewMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/{id}", ViewMarkdownHandler).Methods("GET")
 
+	//
+	// Raw.
+	//
 	router.HandleFunc("/raw/{id}/", ViewRawMarkdownHandler).Methods("GET")
 	router.HandleFunc("/raw/{id}", ViewRawMarkdownHandler).Methods("GET")
 
 	//
-	// Static files
+	// Static files - index.html, robots.txt, etc.
 	//
 	router.NotFoundHandler = http.HandlerFunc(PathHandler)
 
