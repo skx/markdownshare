@@ -1,13 +1,20 @@
 language: go
 sudo: false
-
 matrix:
   include:
   - go: tip
   allow_failures:
   - go: tip
-
 script:
 - "./build-all"
 - go get golang.org/x/tools/cmd/cover
 - go test -coverprofile fmt
+deploy:
+  provider: releases
+  api_key:
+    secure: Jcph1UE2VDQlC+W/neDls42mAG/lpgR4oqqXv1Nf+5rfsjNovgF7rG9eLaw+c18r7jFcjD5xFH/pLciExI5eXvT0o1QP5mUZ1i5pQ5EL75zFHG9FbpFQOsduBE1UyFnpqwP1MnWf6l6fGpk3E0dEyB8lsNMqkjfmM5K0bQ2OI9D8oIrO+8CDLF0HHO35u2y4qwHbuQJ50wHrVGz7SBPwT5YO9Bn263aXhPJWBbQ6m8uZYOTU4KxpAfXXFqjyEjIowqTVW/nLD0vWiyT0Bta04MfL/6bMO2avemq9LeDPW6NrS0aNfuStupEB9Ci0+KUGotuDIoYk49pUXlVAcPlIZYX0ZBS1qhuCA8MHQvKmtN12z+NiZr7NxFbmvfa70GKqAUO8SNc5T+mDEJe2jxMb06dHkZ6JonojtM613vLeY2IU05sYRE1rwP6hDUh3qpJ+VLB6ThteRcuV6HChvI7Zby9yBsEVWKTO237d0b4s6uKwHO4UkE/l/wQLCC3B2MYOfrQr8Ifkc3RkUk0LU2E1/mkSotgavW3ADbHebQdyZjM0J2ME2Qlh3ftrpd9gkWibVt1xGnC+KPDJKZEIjn7sG8fq4oaBJiG1pMhRR3wVWXNpydZtUEYzh/Jm6wQeoDyXrrSlAWtAjprZvhBZHTQXC+ssIKT42BWGwQLEYDDNV2w=
+  file_glob: true
+  file: markdownshare-*
+  skip_cleanup: true
+  on:
+    tags: true
