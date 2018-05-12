@@ -6,11 +6,7 @@ import (
 	"testing"
 )
 
-// Test some simple file transformations
-func TestFilePath(t *testing.T) {
-
-}
-
+// Test basic primitives.
 func TestReadWrite(t *testing.T) {
 
 	//
@@ -18,7 +14,9 @@ func TestReadWrite(t *testing.T) {
 	//
 	p, err := ioutil.TempDir(os.TempDir(), "prefix")
 	if err == nil {
-		PREFIX = p
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
 	}
 
 	//
@@ -78,7 +76,9 @@ func TestReadEditMarkdown(t *testing.T) {
 	//
 	p, err := ioutil.TempDir(os.TempDir(), "prefix")
 	if err == nil {
-		PREFIX = p
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
 	}
 
 	//
@@ -138,7 +138,9 @@ func TestDeleteMarkdown(t *testing.T) {
 	//
 	p, err := ioutil.TempDir(os.TempDir(), "prefix")
 	if err == nil {
-		PREFIX = p
+		PREFIX = p + "/"
+	} else {
+		t.Fatal(err)
 	}
 
 	//
