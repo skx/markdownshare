@@ -378,12 +378,7 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	if content == "" {
-		content, err = getMarkdown(key)
-		if err != nil {
-			status = http.StatusNotFound
-			err = errors.New("Markdown not found.")
-			return
-		}
+		content = getMarkdown(key)
 	}
 
 	//
@@ -562,11 +557,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Get the content.
 	//
-	content, err := getMarkdown(id)
-	if err != nil {
-		status = http.StatusInternalServerError
-		return
-	}
+	content := getMarkdown(id)
 
 	//
 	// Look for an embedded markdown-resource, if it is present.
@@ -711,11 +702,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Get the content.
 	//
-	content, err := getMarkdown(id)
-	if err != nil {
-		status = http.StatusInternalServerError
-		return
-	}
+	content := getMarkdown(id)
 
 	//
 	// Look for an embedded markdown-resource, if it is present.

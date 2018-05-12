@@ -59,9 +59,9 @@ func writeFile(key string, data string) error {
 }
 
 // getMarkdown returns the markdown from the given public-key.
-func getMarkdown(key string) (string, error) {
+func getMarkdown(key string) string {
 	out, _ := readFile(key + ".TEXT")
-	return out, nil
+	return out
 }
 
 // KeyFromAuth returns the public-key from the (private) auth-token

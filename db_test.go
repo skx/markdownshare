@@ -94,11 +94,8 @@ func TestReadEditMarkdown(t *testing.T) {
 	// Get the "markdown"
 	//
 	var data string
-	data, err = getMarkdown(key)
+	data = getMarkdown(key)
 
-	if err != nil {
-		t.Errorf("Got unexpected result reading file")
-	}
 	if data != "_Italic_" {
 		t.Errorf("Got unexpected result reading file")
 	}
@@ -114,11 +111,8 @@ func TestReadEditMarkdown(t *testing.T) {
 	//
 	// Read it again
 	//
-	data, err = getMarkdown(key)
+	data = getMarkdown(key)
 
-	if err != nil {
-		t.Errorf("Got unexpected result reading file")
-	}
 	if data != "__Bold__" {
 		t.Errorf("Got unexpected result reading file")
 	}
@@ -155,10 +149,7 @@ func TestDeleteMarkdown(t *testing.T) {
 	// Get the markdown, to ensure it worked
 	//
 	var data string
-	data, err = getMarkdown(key)
-	if err != nil {
-		t.Errorf("Got unexpected result reading file")
-	}
+	data = getMarkdown(key)
 	if data != "__bold__" {
 		t.Errorf("Got unexpected result reading file")
 	}
@@ -174,10 +165,7 @@ func TestDeleteMarkdown(t *testing.T) {
 	//
 	// Get the markdown, again
 	//
-	data, err = getMarkdown(key)
-	if err != nil {
-		t.Errorf("Got unexpected result reading file")
-	}
+	data = getMarkdown(key)
 	if data != "" {
 		t.Errorf("Got unexpected result reading file")
 	}

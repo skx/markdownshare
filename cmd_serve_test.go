@@ -429,7 +429,7 @@ func TestCreateAndView(t *testing.T) {
 	// OK now try to get that markdown - via the lookup not
 	// a HTTP-fetch right now.
 	target = strings.TrimPrefix(target, "/view/")
-	markdown, _ := getMarkdown(target)
+	markdown := getMarkdown(target)
 
 	//
 	// Should have raw markdown.
@@ -517,10 +517,7 @@ func TestCreateAndDelete(t *testing.T) {
 	// OK now try to get that markdown - via the lookup not
 	// a HTTP-fetch right now.
 	target = strings.TrimPrefix(target, "/view/")
-	markdown, err := getMarkdown(target)
-	if err != nil {
-		t.Errorf("Didn't expect an error fetching markdown")
-	}
+	markdown := getMarkdown(target)
 
 	//
 	// Should have raw markdown.
@@ -558,12 +555,9 @@ func TestCreateAndDelete(t *testing.T) {
 	//
 	// At this point re-fetching the body should fail.
 	//
-	markdown, err = getMarkdown(target)
+	markdown = getMarkdown(target)
 	if markdown != "" {
 		t.Errorf("Expected deleted markdown to be empty - got %s\n", markdown)
-	}
-	if err != nil {
-		t.Errorf("expected an error fetching markdown")
 	}
 
 	//
