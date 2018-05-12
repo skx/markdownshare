@@ -9,6 +9,24 @@
 Markdownshare is the code which is behind [markdownshare.com](https://markdownshare.com/), which is essentially a pastebin site which happens to transform markdown into a HTML.
 
 
+# Installation & Execution
+
+Providing you have a working go-installation you should be able to
+install this software by running:
+
+    $ go get -u github.com/skx/markdownshare
+    $ go install github.com/skx/markdownshare
+
+> **NOTE**: If you've previously downloaded the code this will update your installation to the most recent available version.
+
+Once installed like this you'll should find a `markdownshare` application installed in your go-bin directory.  The application has several modes, implemented via sub-commands, run with no-arguments to see a list.
+
+To launch the server for real you'll want to run:
+
+     $ markdownshare serve [-host 127.0.0.1] [-port 3737]
+
+
+
 ## Storage
 
 Initially all user-data was stored in a local [Redis](https://redis.io/) database, but over time I've started to prefer to use redis only for transient/session-data - so the contents were moved to a local SQLite database.
