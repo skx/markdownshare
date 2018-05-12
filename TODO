@@ -21,3 +21,7 @@ Bugs:
 Todo:
 
 * [x] Drop Redis/SQLite in favour of the filesystem?
+
+* [x] Add badges + readme updates
+
+* [ ] Add more test-coverage
