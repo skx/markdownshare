@@ -185,6 +185,7 @@ func TestMissingID(t *testing.T) {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/delete/", DeleteMarkdownHandler).Methods("GET")
+	router.HandleFunc("/edit/", EditMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/", ViewMarkdownHandler).Methods("GET")
 	router.HandleFunc("/raw/", ViewRawMarkdownHandler).Methods("GET")
 	router.HandleFunc("/view/", ViewMarkdownHandler).Methods("GET")
@@ -192,6 +193,7 @@ func TestMissingID(t *testing.T) {
 	// Some bogus IDS
 	tests := []string{
 		"/delete/",
+		"/edit/",
 		"/html/",
 		"/raw/",
 		"/view/",
@@ -225,6 +227,7 @@ func TestBogusID(t *testing.T) {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("GET")
+	router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("GET")
 	router.HandleFunc("/html/{id}", ViewMarkdownHandler).Methods("GET")
 	router.HandleFunc("/raw/{id}", ViewRawMarkdownHandler).Methods("GET")
 	router.HandleFunc("/view/{id}", ViewMarkdownHandler).Methods("GET")
@@ -232,6 +235,7 @@ func TestBogusID(t *testing.T) {
 	// Some bogus IDS
 	tests := []string{
 		"/delete/$(id)",
+		"/edit/(id)",
 		"/html/`uptime`",
 		"/raw/;",
 		"/view/xx:yy",
