@@ -12,7 +12,7 @@ all: p
 #
 # Rebuild our static.go file from the assets beneath data/
 #
-static.go: data/
+static.go: data/ data/markdown/ data/static/ data/templates/
 	implant -input data/ -output static.go
 
 
