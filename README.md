@@ -35,13 +35,17 @@ Due to issues with embedding SQLite in golang I've now moved to storing data
 upon the filesystem, beneath a common prefix, which is slightly less efficient
 but still good enough for the volume of users I see.
 
+
 ## Rate-Limiting
 
-All the HTTP-handlers are wrapped, via `Context`, to perform rate-limiting.
+The server has support for rate-limiting, you can enable this by passing the address of a [redis](https://redis.io/) server to the binary:
 
-This is either terrible, or a useful safe-guard depending on whether you hit it or not.
+      $ markdownshare  serve -redis=127.0.0.1:6379
 
-See the various `X-RateLimit` headers in the response to see if you're affected.
+If this flag is not present then rate-limiting will be disabled.  If a client
+makes too many requests they will be returned a HTTP 425, and each request
+will return a series of headers prefixed with `X-RateLimit` to allow clients
+to see how many requests they have made, and have remaining.
 
 
 ## Notes

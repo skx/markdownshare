@@ -63,10 +63,16 @@ func RemoteIP(request *http.Request) string {
 	return (address)
 }
 
-// AddContext adds a wrapper around all of our HTTP-methods, such that
-// rate-limiting will be invoked.
-func AddContext(next http.Handler) http.Handler {
+// AddRateLimiting is a wrapper placed around all of our HTTP-methods, such
+// that rate-limiting will be invoked.
+func AddRateLimiting(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		if rateLimiter == nil {
+			fmt.Printf("Rate-limit disabled\n")
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		//
 		// Lookup the remote IP and limit to 200/Hour
@@ -758,8 +764,20 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 // The options set by our command-line flags.
 //
 type serveCmd struct {
+	//
+	// The host to bind our server upon
+	//
 	bindHost string
+
+	//
+	// The port to listen upon
+	//
 	bindPort int
+
+	//
+	// The (optional) redis-host  to use for rate-limiting
+	//
+	redisHost string
 }
 
 //
@@ -779,6 +797,7 @@ func (*serveCmd) Usage() string {
 func (p *serveCmd) SetFlags(f *flag.FlagSet) {
 	f.IntVar(&p.bindPort, "port", 3737, "The port to bind upon.")
 	f.StringVar(&p.bindHost, "host", "127.0.0.1", "The IP to listen upon.")
+	f.StringVar(&p.redisHost, "redis", "", "The address and port of a redis-server for rate-limiting.")
 }
 
 //
@@ -787,18 +806,17 @@ func (p *serveCmd) SetFlags(f *flag.FlagSet) {
 func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 
 	//
-	// Setup a redis-connection for rate-limiting.
+	// If we have a redis-server specified, then use it.
 	//
-	ring := redis.NewRing(&redis.RingOptions{
-		Addrs: map[string]string{
-			"server1": "127.0.0.1:6379",
-		},
-	})
+	if p.redisHost != "" {
+		ring := redis.NewRing(&redis.RingOptions{
+			Addrs: map[string]string{
+				"server1": p.redisHost,
+			},
+		})
 
-	//
-	// And point the rate-limiter to it
-	//
-	rateLimiter = redis_rate.NewLimiter(ring)
+		rateLimiter = redis_rate.NewLimiter(ring)
+	}
 
 	//
 	// Create a new router and our route-mappings.
@@ -866,7 +884,7 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	//
 	// Wire up context (i.e. rate-limiter)
 	//
-	contextRouter := AddContext(loggedRouter)
+	contextRouter := AddRateLimiting(loggedRouter)
 
 	//
 	// Launch the server.

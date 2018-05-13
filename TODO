@@ -22,6 +22,6 @@ Todo:
 
 * [x] Drop Redis/SQLite in favour of the filesystem?
 * [x] Add badges + readme updates
-* [ ] Add more test-coverage
-* [ ] Make redis-based rate-limiting optional
+* [x] Add more test-coverage
+* [x] Make redis-based rate-limiting optional
 * [ ] Add subcommand to show recent uploads
