@@ -566,7 +566,7 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	content := getMarkdown(id)
 
 	//
-	// Look for an embedded markdown-resource, if it is present.
+	// If that failed then look for an embedded markdown-resource instead.
 	//
 	if len(content) == 0 {
 		var tmpl []byte
@@ -615,33 +615,27 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	//   /html/xxx -> Shows unwrapped markdown in HTML
 	//
+	var tmpl []byte
+
+	//
+	// We either show wrapped, or unwrapped.
+	//
 	if strings.HasPrefix(req.URL.Path, "/html") {
-		str := `<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
-<head>
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<link rel="author" href="/humans.txt" />
-<title>` + x.ID + `</title>
-</head>
-<body>` + x.HTML + `</body>
-</html>`
-		res.Header().Set("Content-Type", "text/html")
-		fmt.Fprintf(res, str)
-		return
+		tmpl, err = getResource("data/templates/view_raw.tmpl")
+	} else {
+		tmpl, err = getResource("data/templates/view.tmpl")
 	}
 
 	//
-	// Load our template resource.
+	// If the template-loading failed we're in trouble.
 	//
-	tmpl, err := getResource("data/templates/view.tmpl")
 	if err != nil {
 		status = http.StatusNotFound
 		return
 	}
 
 	//
-	//  Load our template, from the resource.
+	//  Compile the template.
 	//
 	src := string(tmpl)
 	t := template.Must(template.New("tmpl").Parse(src))
@@ -711,7 +705,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	content := getMarkdown(id)
 
 	//
-	// Look for an embedded markdown-resource, if it is present.
+	// If that failed then look for an embedded markdown-resource instead.
 	//
 	if len(content) == 0 {
 		var tmpl []byte
@@ -734,7 +728,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	//
-	//  Load our template, from the resource.
+	// Compile the template
 	//
 	src := string(tmpl)
 	t := template.Must(template.New("tmpl").Parse(src))
