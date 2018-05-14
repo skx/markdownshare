@@ -756,7 +756,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Otherwise write the result.
 	//
-	res.Header().Set("Content-Type", "text/plain")
+	res.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	buf.WriteTo(res)
 }
 
