@@ -113,8 +113,8 @@ func TestKonamiCode(t *testing.T) {
 		{"/view/konami", "konami"},
 		{"/view/konami/", "konami"},
 		{"/view/konami2/", "wasn't found for the given id"},
-		{"/html/konami", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"},
-		{"/html/konami/", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"},
+		{"/html/konami", "<title>konami</title>"},
+		{"/html/konami/", "<title>konami</title>"},
 		{"/raw/konami", "the [Konami Code](http://en.wikipedia"},
 		{"/raw/konami/", "the [Konami Code](http://en.wikipedia"},
 	}

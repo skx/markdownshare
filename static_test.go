@@ -15,8 +15,8 @@ import (
 //
 func TestResourceCount(t *testing.T) {
 	out := getResources()
-	if len(out) != 19 {
-		t.Errorf("We expected 19 resources but found %d.", len(out))
+	if len(out) != 20 {
+		t.Errorf("We expected 20 resources but found %d.", len(out))
 	}
 }
 
