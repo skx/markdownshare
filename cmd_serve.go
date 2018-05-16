@@ -11,6 +11,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -34,7 +35,7 @@ import (
 //
 // Session secret
 //
-var store = sessions.NewCookieStore([]byte("something-very-secret"))
+var store *sessions.CookieStore
 
 //
 // Rate-limiter
@@ -811,6 +812,14 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 
 		rateLimiter = redis_rate.NewLimiter(ring)
 	}
+
+	//
+	// Populate our cookie store with a random
+	// secret for security
+	//
+	token := make([]byte, 32)
+	rand.Read(token)
+	store = sessions.NewCookieStore(token)
 
 	//
 	// Create a new router and our route-mappings.
