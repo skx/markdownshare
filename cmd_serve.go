@@ -70,7 +70,6 @@ func AddRateLimiting(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if rateLimiter == nil {
-			fmt.Printf("Rate-limit disabled\n")
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -896,7 +895,8 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	//
 	err := http.ListenAndServe(bind, contextRouter)
 	if err != nil {
-		fmt.Printf("\nError: %s\n", err.Error())
+		fmt.Printf("\nError launching server: %s\n", err.Error())
+		return subcommands.ExitFailure
 	}
 
 	//
