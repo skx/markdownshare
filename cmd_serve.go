@@ -244,9 +244,11 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 		//
 		// Save the data.
 		//
-		session, _ := store.Get(req, "session-name")
-		session.Values["auth"] = auth
-		session.Save(req, res)
+		if store != nil {
+			session, _ := store.Get(req, "session-name")
+			session.Values["auth"] = auth
+			session.Save(req, res)
+		}
 
 		// Now redirect to view
 		//
@@ -600,12 +602,14 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	// Get the auth-value, if present, for the single time it
 	// will be shown.
 	//
-	session, _ := store.Get(req, "session-name")
-	auth := session.Values["auth"]
-	if auth != nil {
-		x.Auth = auth.(string)
-		session.Values["auth"] = ""
-		session.Save(req, res)
+	if store != nil {
+		session, _ := store.Get(req, "session-name")
+		auth := session.Values["auth"]
+		if auth != nil {
+			x.Auth = auth.(string)
+			session.Values["auth"] = ""
+			session.Save(req, res)
+		}
 	}
 
 	//
