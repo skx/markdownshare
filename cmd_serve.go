@@ -815,11 +815,13 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 
 	//
 	// Populate our cookie store with a random
-	// secret for security
+	// authentication + encryption secret for security.
 	//
-	token := make([]byte, 32)
-	rand.Read(token)
-	store = sessions.NewCookieStore(token)
+	auth := make([]byte, 32)
+	enc := make([]byte, 32)
+	rand.Read(auth)
+	rand.Read(enc)
+	store = sessions.NewCookieStore(auth, enc)
 
 	//
 	// Create a new router and our route-mappings.
