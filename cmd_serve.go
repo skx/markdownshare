@@ -127,49 +127,6 @@ func Render(markdown string) string {
 	return (emoji)
 }
 
-// ExpandResource reads a file from our static-resources, and
-// processes any lines that contain "includes".
-//
-// This is done to ensure that the HTML that we server to clients
-// doesn't require any CSS or JS requests
-//
-func ExpandResource(file string) (string, error) {
-
-	data, err := getResource(file)
-	if err != nil {
-		return "", err
-	}
-
-	output := ""
-
-	// look for the "#include <xx>" lines
-	lines := strings.Split(string(data), "\n")
-
-	for _, line := range lines {
-
-		if strings.HasPrefix(line, "#include ") {
-			//
-			// Open the file
-			//
-			inc := line
-			inc = strings.TrimPrefix(inc, "#include ")
-
-			txt, err := getResource("data/" + inc)
-			if err != nil {
-				fmt.Printf("Failed to read 'data/" + inc + "'")
-				return "", nil
-			}
-
-			output += string(txt)
-		} else {
-			output += line
-			output += "\n"
-		}
-	}
-
-	return output, nil
-}
-
 // PathHandler serves from our embedded resource(s)
 func PathHandler(res http.ResponseWriter, req *http.Request) {
 
