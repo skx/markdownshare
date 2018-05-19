@@ -156,9 +156,6 @@ func ExpandResource(file string) (string, error) {
 
 			txt, err := getResource("data/" + inc)
 			if err != nil {
-				return "", err
-			}
-			if err != nil {
 				fmt.Printf("Failed to read 'data/" + inc + "'")
 				return "", nil
 			}
