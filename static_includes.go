@@ -3,7 +3,6 @@
 // lines from static-resources included in our binary.
 //
 
-
 package main
 
 import (
