@@ -127,6 +127,52 @@ func Render(markdown string) string {
 	return (emoji)
 }
 
+// ExpandResource reads a file from our static-resources, and
+// processes any lines that contain "includes".
+//
+// This is done to ensure that the HTML that we server to clients
+// doesn't require any CSS or JS requests
+//
+func ExpandResource(file string) (string, error) {
+
+	data, err := getResource(file)
+	if err != nil {
+		return "", err
+	}
+
+	output := ""
+
+	// look for the "#include <xx>" lines
+	lines := strings.Split(string(data), "\n")
+
+	for _, line := range lines {
+
+		if strings.HasPrefix(line, "#include ") {
+			//
+			// Open the file
+			//
+			inc := line
+			inc = strings.TrimPrefix(inc, "#include ")
+
+			txt, err := getResource("data/" + inc)
+			if err != nil {
+				return "", err
+			}
+			if err != nil {
+				fmt.Printf("Failed to read 'data/" + inc + "'")
+				return "", nil
+			}
+
+			output += string(txt)
+		} else {
+			output += line
+			output += "\n"
+		}
+	}
+
+	return output, nil
+}
+
 // PathHandler serves from our embedded resource(s)
 func PathHandler(res http.ResponseWriter, req *http.Request) {
 
@@ -141,7 +187,7 @@ func PathHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Serve from our static-contents
 	//
-	tmpl, err := getResource("data/static" + path)
+	data, err := ExpandResource("data/static" + path)
 	if err != nil {
 		fmt.Fprintf(res, err.Error())
 		return
@@ -165,7 +211,7 @@ func PathHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// Send the output back.
-	fmt.Fprintf(res, "%s", tmpl)
+	fmt.Fprintf(res, "%s", data)
 
 }
 
@@ -207,7 +253,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Load our template resource.
 	//
-	tmpl, err := getResource("data/templates/create.tmpl")
+	tmpl, err := ExpandResource("data/templates/create.tmpl")
 	if err != nil {
 		status = http.StatusNotFound
 		return
@@ -409,8 +455,8 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Load our template resource.
 	//
-	var tmpl []byte
-	tmpl, err = getResource("data/templates/edit.tmpl")
+	var tmpl string
+	tmpl, err = ExpandResource("data/templates/edit.tmpl")
 	if err != nil {
 		status = http.StatusNotFound
 		return
@@ -619,15 +665,15 @@ func ViewMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	//   /html/xxx -> Shows unwrapped markdown in HTML
 	//
-	var tmpl []byte
+	var tmpl string
 
 	//
 	// We either show wrapped, or unwrapped.
 	//
 	if strings.HasPrefix(req.URL.Path, "/html") {
-		tmpl, err = getResource("data/templates/view_raw.tmpl")
+		tmpl, err = ExpandResource("data/templates/view_raw.tmpl")
 	} else {
-		tmpl, err = getResource("data/templates/view.tmpl")
+		tmpl, err = ExpandResource("data/templates/view.tmpl")
 	}
 
 	//
@@ -725,7 +771,7 @@ func ViewRawMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	// Load our template resource.
 	//
-	tmpl, err := getResource("data/templates/raw.tmpl")
+	tmpl, err := ExpandResource("data/templates/raw.tmpl")
 	if err != nil {
 		status = http.StatusNotFound
 		return
