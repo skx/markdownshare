@@ -895,9 +895,20 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	contextRouter := AddRateLimiting(loggedRouter)
 
 	//
+	// We want to make sure we handle timeouts effectively by using
+	// a non-default http-server
+	//
+	srv := &http.Server{
+		Addr:         bind,
+		Handler:      contextRouter,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	//
 	// Launch the server.
 	//
-	err := http.ListenAndServe(bind, contextRouter)
+	err := srv.ListenAndServe()
 	if err != nil {
 		fmt.Printf("\nError launching server: %s\n", err.Error())
 		return subcommands.ExitFailure
