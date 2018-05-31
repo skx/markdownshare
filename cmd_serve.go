@@ -30,6 +30,7 @@ import (
 	"github.com/kyokomi/emoji"
 	"github.com/microcosm-cc/bluemonday"
 	"github.com/shurcooL/github_flavored_markdown"
+	_ "github.com/skx/golang-metrics"
 )
 
 //
