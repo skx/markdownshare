@@ -141,9 +141,7 @@ func showStats() {
 
 }
 
-//
-// Entry-point.
-//
+// Execute is our entry-point to this sub-command
 func (p *IPCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{}) subcommands.ExitStatus {
 
 	if p.source != "" {
