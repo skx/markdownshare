@@ -18,6 +18,7 @@ import (
 	"github.com/google/subcommands"
 )
 
+// IPCmd holds the options set by our command-line flags.
 type IPCmd struct {
 	source string
 }
@@ -25,8 +26,14 @@ type IPCmd struct {
 //
 // Glue
 //
-func (*IPCmd) Name() string     { return "ips" }
+
+// Name returns our command-name
+func (*IPCmd) Name() string { return "ips" }
+
+// Synopsis returns our command-synopsis
 func (*IPCmd) Synopsis() string { return "Show counts of uploads by each distinct IP addresses." }
+
+// Usage returns our usage information.
 func (*IPCmd) Usage() string {
 	return `ips :
   Show the number of uploads each IP has made
