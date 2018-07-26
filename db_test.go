@@ -24,7 +24,7 @@ func TestReadWrite(t *testing.T) {
 	//
 	key := "this-is-a-key"
 	var out string
-	out, err = readFile(key)
+	_, err = readFile(key)
 
 	if err == nil {
 		t.Errorf("No error reading a missing file, when we expected one")
