@@ -69,8 +69,7 @@ func showIP(ip string) {
 		data, err := ioutil.ReadFile(filename)
 
 		if err == nil {
-			sip := string(data)
-			sip = strings.TrimSpace(string(sip))
+			sip := strings.TrimSpace(string(data))
 
 			if sip == ip {
 				id := path.Base(filename)
