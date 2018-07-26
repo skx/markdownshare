@@ -40,9 +40,7 @@ func (*IPCmd) Usage() string {
 `
 }
 
-//
-// Flag setup
-//
+// SetFlags updates the IPCmd structure with command-line flags.
 func (p *IPCmd) SetFlags(f *flag.FlagSet) {
 	f.StringVar(&p.source, "source", "", "Show uploads from the given source IP.")
 }
