@@ -110,8 +110,7 @@ func showStats() {
 		ip, err := ioutil.ReadFile(filename)
 
 		if err == nil {
-			sip := string(ip)
-			sip = strings.TrimSpace(string(ip))
+			sip := strings.TrimSpace(string(ip))
 			data[sip] += 1
 		}
 	}
