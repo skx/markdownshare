@@ -54,12 +54,25 @@
   <div class="left">
   </div>
   <div class="right">
-    Copyright &copy; 2014-2018 by <a href="https://steve.kemp.fi/">Steve Kemp</a>
+    Copyright &copy; 2014<span id="current_year"></span> by <a href="https://steve.kemp.fi/">Steve Kemp</a>
   </div>
   <div class="clear"> </div>
 </div>
 
 </div>
+<!-- Pure javascript, no jQuery -->
+<script type="text/javascript">
+ window.onload = function() {
+   // Get the year.
+   var yr = (new Date()).getFullYear();
+
+   // Update the document
+   var span = document.getElementById("current_year");
+   if ( span != null ) {
+     span.textContent = "-" + yr;
+   }
+ }
+</script>
 <script type="text/javascript">
 #include static/js/k.js
 </script>
