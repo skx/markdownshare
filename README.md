@@ -1,4 +1,3 @@
-[![Travis CI](https://img.shields.io/travis/skx/markdownshare/master.svg?style=flat-square)](https://travis-ci.org/skx/markdownshare)
 [![Go Report Card](https://goreportcard.com/badge/github.com/skx/markdownshare)](https://goreportcard.com/report/github.com/skx/markdownshare)
 [![license](https://img.shields.io/github/license/skx/markdownshare.svg)](https://github.com/skx/markdownshare/blob/master/LICENSE)
 [![Release](https://img.shields.io/github/release/skx/markdownshare.svg)](https://github.com/skx/markdownshare/releases/latest)
