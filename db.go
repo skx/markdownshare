@@ -14,7 +14,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 )
 
 // PREFIX is the prefix beneath which all our files are stored.
@@ -85,16 +85,10 @@ func SaveMarkdown(markdown string, ip string) (string, string, error) {
 	var auth string
 	var key string
 
-	u1, err := uuid.NewV4()
-	if err != nil {
-		return "", "", err
-	}
+	u1 := uuid.NewV4()
 	auth = u1.String()
 
-	u2, err := uuid.NewV4()
-	if err != nil {
-		return "", "", err
-	}
+	u2 := uuid.NewV4()
 	key = u2.String()
 
 	writeFile(key+".TEXT", markdown)
