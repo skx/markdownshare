@@ -377,12 +377,12 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	key, err = KeyFromAuth(id)
 	if err != nil {
 		status = http.StatusNotFound
-		err = errors.New("Invalid authentication-token.")
+		err = errors.New("invalid authentication-token")
 		return
 	}
 	if key == "" {
 		status = http.StatusNotFound
-		err = errors.New("The authentication-token was invalid.")
+		err = errors.New("the authentication-token was invalid")
 		return
 	}
 

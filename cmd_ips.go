@@ -111,7 +111,7 @@ func showStats() {
 
 		if err == nil {
 			sip := strings.TrimSpace(string(ip))
-			data[sip] += 1
+			data[sip]++
 		}
 	}
 
