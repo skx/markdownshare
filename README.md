@@ -3,22 +3,42 @@
 [![Release](https://img.shields.io/github/release/skx/markdownshare.svg)](https://github.com/skx/markdownshare/releases/latest)
 [![gocover store](http://gocover.io/_badge/github.com/skx/markdownshare)](http://gocover.io/github.com/skx/markdownshare)
 
+* [markdownshare](#markdownshare)
+* [Installation](#installation)
+  * [Build without Go Modules (Go before 1.11)](#build-without-go-modules-go-before-111)
+  * [Build with Go Modules (Go 1.11 or higher)](#build-with-go-modules-go-111-or-higher)
+* [Usage](#usage)
+* [Storage](#storage)
+* [Rate-Limiting](#rate-limiting)
+* [Notes](#notes)
+* [Github Setup](#github-setup)
+
+
 # markdownshare
 
 Markdownshare is the code which is behind [markdownshare.com](https://markdownshare.com/), which is essentially a pastebin site which happens to transform markdown into a HTML.
 
 
-# Installation & Execution
+# Installation
 
-Providing you have a working go-installation you should be able to
-install this software by running:
+There are two ways to install this project from source, which depend on the version of the [go](https://golang.org/) version you're using.
 
-    $ go get -u github.com/skx/markdownshare
-    $ go install github.com/skx/markdownshare
+If you prefer you can fetch a binary from [our release page](https://github.com/skx/markdownshare/releases).
 
-> **NOTE**: If you've previously downloaded the code this will update your installation to the most recent available version.
+## Build without Go Modules (Go before 1.11)
 
-Once installed like this you'll should find a `markdownshare` application installed in your go-bin directory.  The application has several modes, implemented via sub-commands, run with no-arguments to see a list.
+    go get -u github.com/skx/markdownshare
+
+## Build with Go Modules (Go 1.11 or higher)
+
+    git clone https://github.com/skx/markdownshare ;# make sure to clone outside of GOPATH
+    cd markdownshare
+    go install
+
+
+## Usage
+
+Once installed like this you'll should find a `markdownshare` application.  The application has several modes, implemented via sub-commands, run with no-arguments to see a list.
 
 To launch the server for real you'll want to run:
 
@@ -56,17 +76,19 @@ to tweak the look & feel by editing them then you're more then welcome.
 The raw HTML-templates are located beneath `data/`, and you can edit them
 then rebuild the compiled versions via the `implant` tool.
 
-If you don't already have `implant` installed fetch it like so:
+If you don't already have `implant` installed please install, following the
+instructions here:
 
-     go get -u github.com/skx/implant/
+* [https://github.com/skx/implant](https://github.com/skx/implant)
 
-Now regenerate the compiled version(s) of the templates and rebuild the
-binary to make your changes:
+Using `implant` you can regenerate the compiled version(s) of the templates
+and rebuild the binary to make your changes:
 
     implant -input data/ -output static.go
     go build .
 
 (A simple `make` should do the correct thing upon a GNU/Linux host.)
+
 
 ## Github Setup
 
