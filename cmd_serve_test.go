@@ -39,7 +39,7 @@ func TestStaticResources(t *testing.T) {
 		{"/index.html", "Simple Markdown sharing", "text/html"},
 		{"/", "Simple Markdown sharing", "text/html"},
 		{"/markdownshare.com.conf", "/create", "text/plain; charset=utf-8"},
-		{"/resource/not/found", "Failed to find resource", "text/plain; charset=utf-8"},
+		{"/resource/not/found", "failed to find resource 'data/static/resource/not/found'", "text/plain; charset=utf-8"},
 	}
 
 	for _, entry := range tests {
