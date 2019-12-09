@@ -47,4 +47,4 @@
 
 > This project is released under the terms of the GNU General Public License, version 2, or later, and if you wish you can deploy your own installation:
 
-> * [Source code on github](https://github.com/skx/markdown/).
+> * [https://github.com/skx/markdownshare/](https://github.com/skx/markdownshare/).
