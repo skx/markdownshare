@@ -57,17 +57,6 @@ func TestResourceMatches(t *testing.T) {
 		}
 
 		//
-		// Now test the length is the same as generated in the file.
-		//
-		for i, o := range all {
-			if o.Filename == entry.Filename {
-				if len(master) != getResources()[i].Length {
-					t.Errorf("Data length didn't match the generated size")
-				}
-			}
-		}
-
-		//
 		// Test the data-matches
 		//
 		if string(master) != string(data) {
