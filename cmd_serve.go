@@ -179,7 +179,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	)
 	defer func() {
 		if nil != err {
-			http.Error(res, err.Error(), status)
+			http.Error(res, "There was an error creating/saving your markdown resource:\n\n"+err.Error(), status)
 		}
 	}()
 
@@ -236,6 +236,9 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 		var key string
 		var auth string
 
+		//
+		// Save the markdown to disk.
+		//
 		key, auth, err = SaveMarkdown(content, ip)
 		if err != nil {
 			status = http.StatusNotFound
@@ -243,7 +246,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 		}
 
 		//
-		// Save the data.
+		// Populate the session appropriately.
 		//
 		if store != nil {
 			session, _ := store.Get(req, "session-name")
@@ -251,7 +254,8 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 			session.Save(req, res)
 		}
 
-		// Now redirect to view
+		//
+		// Now redirect to view the new resource.
 		//
 		http.Redirect(res, req, "/view/"+key, 302)
 		return
@@ -276,6 +280,9 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 
 		ip := RemoteIP(req)
 
+		//
+		// Save the markdown to disk.
+		//
 		var key string
 		var auth string
 		key, auth, err = SaveMarkdown(content, ip)
@@ -297,7 +304,7 @@ func CreateMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 		out, _ := json.MarshalIndent(tmp, "", "     ")
 
 		//
-		// Serve it appropriately
+		// Serve the response appropriately
 		//
 		res.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(res, "%s", out)

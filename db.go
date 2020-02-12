@@ -91,10 +91,22 @@ func SaveMarkdown(markdown string, ip string) (string, string, error) {
 	u2 := uuid.NewV4()
 	key = u2.String()
 
-	writeFile(key+".TEXT", markdown)
-	writeFile(key+".IP", ip)
-	writeFile(key+".AUTH", auth)
-	writeFile(auth, key)
+	err := writeFile(key+".TEXT", markdown)
+	if err != nil {
+		return "", "", err
+	}
+	err = writeFile(key+".IP", ip)
+	if err != nil {
+		return "", "", err
+	}
+	err = writeFile(key+".AUTH", auth)
+	if err != nil {
+		return "", "", err
+	}
+	err = writeFile(auth, key)
+	if err != nil {
+		return "", "", err
+	}
 
 	return key, auth, nil
 }
