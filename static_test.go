@@ -11,12 +11,17 @@ import (
 )
 
 //
-// Test that we have one embedded resource.
+// Test that we have the expected number of embedded resources.
 //
 func TestResourceCount(t *testing.T) {
+	// expected count
+	cnt := 21
+
+	// actual resources
 	out := getResources()
-	if len(out) != 20 {
-		t.Errorf("We expected 20 resources but found %d.", len(out))
+
+	if len(out) != cnt {
+		t.Errorf("We expected %d resources but found %d.", cnt, len(out))
 	}
 }
 

@@ -475,6 +475,80 @@ func EditMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 
 }
 
+// DeleteMarkdownHandlerPrompt shows a form to force confirmation of a deletion
+// request.
+func DeleteMarkdownHandlerPrompt(res http.ResponseWriter, req *http.Request) {
+	var (
+		status int
+		err    error
+	)
+	defer func() {
+		if nil != err {
+			http.Error(res, err.Error(), status)
+		}
+	}()
+
+	//
+	// Get the authentication-token
+	//
+	vars := mux.Vars(req)
+	id := vars["id"]
+
+	//
+	// Ensure we received a parameter.
+	//
+	if len(id) < 1 {
+		status = http.StatusNotFound
+		err = errors.New("Missing 'id' parameter")
+		return
+	}
+
+	//
+	// Page data
+	//
+	type Pagedata struct {
+		ID string
+	}
+	var tmp Pagedata
+	tmp.ID = id
+
+	//
+	// Load our template resource.
+	//
+	var tmpl string
+	tmpl, err = ExpandResource("data/templates/delete.tmpl")
+	if err != nil {
+		status = http.StatusNotFound
+		return
+	}
+
+	//
+	//  Load our template, from the resource.
+	//
+	src := string(tmpl)
+	t := template.Must(template.New("tmpl").Parse(src))
+
+	//
+	// Execute the template into our buffer.
+	//
+	buf := &bytes.Buffer{}
+	err = t.Execute(buf, tmp)
+
+	//
+	// If there were errors, then show them.
+	//
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+
+	//
+	// Otherwise write the result to the caller.
+	//
+	res.Header().Set("Content-Type", "text/html")
+	buf.WriteTo(res)
+}
+
 // DeleteMarkdownHandler removes an entry.
 func DeleteMarkdownHandler(res http.ResponseWriter, req *http.Request) {
 	var (
@@ -857,10 +931,16 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	router.HandleFunc("/edit/{id}/", EditMarkdownHandler).Methods("POST")
 
 	//
-	// Delete.
+	// Delete - prompt.
 	//
-	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandler).Methods("GET")
-	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("GET")
+	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandlerPrompt).Methods("GET")
+	router.HandleFunc("/delete/{id}", DeleteMarkdownHandlerPrompt).Methods("GET")
+
+	//
+	// Delete - For real.
+	//
+	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandler).Methods("POST")
+	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("POST")
 
 	//
 	// View.
@@ -889,7 +969,7 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	//
 	// Show where we'll bind
 	//
-	bind := fmt.Sprintf("%s:%d", "127.0.0.1", 3737)
+	bind := fmt.Sprintf("%s:%d", p.bindHost, p.bindPort)
 	fmt.Printf("Launching the server on http://%s\n", bind)
 
 	//
