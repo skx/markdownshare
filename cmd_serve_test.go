@@ -39,7 +39,7 @@ func TestStaticResources(t *testing.T) {
 		{"/index.html", "Simple Markdown sharing", "text/html"},
 		{"/", "Simple Markdown sharing", "text/html"},
 		{"/markdownshare.com.conf", "/create", "text/plain; charset=utf-8"},
-		{"/resource/not/found", "failed to find resource 'data/static/resource/not/found'", "text/plain; charset=utf-8"},
+		{"/resource/not/found", "could not be found", "text/html"},
 	}
 
 	for _, entry := range tests {
@@ -53,7 +53,9 @@ func TestStaticResources(t *testing.T) {
 
 		// Check the status code is what we expect.
 		if status := rr.Code; status != http.StatusOK {
-			t.Errorf("Unexpected status-code: %v", status)
+			if !strings.Contains(entry.URL, "/not/found") {
+				t.Errorf("Unexpected status-code: %v", status)
+			}
 		}
 
 		if ctype := rr.Header().Get("Content-Type"); ctype != entry.Type {

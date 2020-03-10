@@ -128,6 +128,17 @@ func Render(markdown string) string {
 	return (emoji)
 }
 
+// ReadOnlyHandler
+func ReadOnlyHandler(res http.ResponseWriter, req *http.Request) {
+	data, err := ExpandResource("data/static/read-only/index.html")
+	if err != nil {
+		fmt.Fprintf(res, err.Error())
+		return
+	}
+	res.Header().Set("Content-Type", "text/html")
+	fmt.Fprintf(res, "%s", data)
+}
+
 // PathHandler serves from our embedded resource(s)
 func PathHandler(res http.ResponseWriter, req *http.Request) {
 
@@ -144,7 +155,14 @@ func PathHandler(res http.ResponseWriter, req *http.Request) {
 	//
 	data, err := ExpandResource("data/static" + path)
 	if err != nil {
-		fmt.Fprintf(res, err.Error())
+
+		// Return known-good content
+		data, _ = ExpandResource("data/static/404.html")
+
+		// Set the MIME-type and return a 404.
+		res.Header().Set("Content-Type", "text/html")
+		res.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(res, "%s", data)
 		return
 	}
 
@@ -858,6 +876,11 @@ type serveCmd struct {
 	// The (optional) redis-host  to use for rate-limiting
 	//
 	redisHost string
+
+	//
+	// Are we in read-only mode?
+	//
+	readOnly bool
 }
 
 //
@@ -878,6 +901,7 @@ func (p *serveCmd) SetFlags(f *flag.FlagSet) {
 	f.IntVar(&p.bindPort, "port", 3737, "The port to bind upon.")
 	f.StringVar(&p.bindHost, "host", "127.0.0.1", "The IP to listen upon.")
 	f.StringVar(&p.redisHost, "redis", "", "The address and port of a redis-server for rate-limiting.")
+	f.BoolVar(&p.readOnly, "read-only", false, "read-only mode disables creation, editing, and deletion of posts.")
 }
 
 //
@@ -916,29 +940,44 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	//
 	// Create.
 	//
-	//
-	router.HandleFunc("/create/", CreateMarkdownHandler).Methods("GET")
-	router.HandleFunc("/create", CreateMarkdownHandler).Methods("GET")
-	router.HandleFunc("/create/", CreateMarkdownHandler).Methods("POST")
-	router.HandleFunc("/create", CreateMarkdownHandler).Methods("POST")
+	create := CreateMarkdownHandler
+	if p.readOnly {
+		create = ReadOnlyHandler
+	}
+	router.HandleFunc("/create/", create).Methods("GET")
+	router.HandleFunc("/create", create).Methods("GET")
+	router.HandleFunc("/create/", create).Methods("POST")
+	router.HandleFunc("/create", create).Methods("POST")
 
 	//
 	// Edit.
 	//
-	router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("GET")
-	router.HandleFunc("/edit/{id}", EditMarkdownHandler).Methods("POST")
-	router.HandleFunc("/edit/{id}/", EditMarkdownHandler).Methods("GET")
-	router.HandleFunc("/edit/{id}/", EditMarkdownHandler).Methods("POST")
+	edit := EditMarkdownHandler
+	if p.readOnly {
+		edit = ReadOnlyHandler
+	}
+	router.HandleFunc("/edit/{id}", edit).Methods("GET")
+	router.HandleFunc("/edit/{id}", edit).Methods("POST")
+	router.HandleFunc("/edit/{id}/", edit).Methods("GET")
+	router.HandleFunc("/edit/{id}/", edit).Methods("POST")
 
 	//
 	// Delete - prompt.
 	//
-	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandlerPrompt).Methods("GET")
-	router.HandleFunc("/delete/{id}", DeleteMarkdownHandlerPrompt).Methods("GET")
+	delete := DeleteMarkdownHandlerPrompt
+	if p.readOnly {
+		delete = ReadOnlyHandler
+	}
+	router.HandleFunc("/delete/{id}/", delete).Methods("GET")
+	router.HandleFunc("/delete/{id}", delete).Methods("GET")
 
 	//
 	// Delete - For real.
 	//
+	delete = DeleteMarkdownHandler
+	if p.readOnly {
+		delete = ReadOnlyHandler
+	}
 	router.HandleFunc("/delete/{id}/", DeleteMarkdownHandler).Methods("POST")
 	router.HandleFunc("/delete/{id}", DeleteMarkdownHandler).Methods("POST")
 
