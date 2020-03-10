@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link type="image/x-icon" rel="icon" href="/favicon.ico" />
+<meta name="description" content="Quick and easy sharing of markdown text" />
+<meta name="keywords" content="markdown, pastebin, markdownsharing, sharing markdown" />
+<style>
+#include static/css/style.css
+</style>
+<link rel="author" href="/humans.txt" />
+<title>MarkdownShare : Simple Markdown sharing</title>
+</head>
+<body>
+<div id="wrap">
+<div id="header">
+<h1><a href="/">MarkdownShare.com</a></h1>
+<h2>Quick and easy sharing of markdown text</h2>
+</div>
+
+<div id="topmenu">
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/api/">API</a></li>
+<li><a href="/create/">Create</a></li>
+<li><a href="/cheatsheet/">CheatSheet</a></li>
+<li><a href="/faq/">FAQ</a></li>
+</ul>
+<p style="border: 1px solid black; background: salmon !important; font-weight:bold;width:100%"><b>NOTE</b> This site will be going 100% read-only on 1st April 2020.  See <a href="/faq/">FAQ</a> for more details.</p>
+</div>
+
+<div id="content">
+      <h1>Read Only</h1>
+      <blockquote>
+        <p>This site has now been set to read-only mode.</p>
+        <p>Running the site requires a lot of time and attention, as it has unfortunately become a SPAM-magnet.</p>
+        <p>For further details please consult the following github issues:</p>
+        <ul>
+          <li><a href="https://github.com/skx/markdownshare/issues?q=is%3Aissue+is%3Aopen+label%3Asite-notice">site-notice issues</a></li>
+        </ul>
+        <p>Hosting your own instance of this software is very simple, and you can find the source-code and precompiled binaries upon the Github project:</p>
+        <ul>
+          <li><a href="https://github.com/skx/markdownshare/">https://github.com/skx/markdownshare/</a></li>
+        </ul>
+        <p>The site will remain, in read-only mode, until the end of 2020 then all data will be securely erased.</p>
+      </blockquote>
+
+</div>
+<div class="clear"> </div>
+<div id="footer">
+  <div class="left">
+  </div>
+  <div class="right">
+    Copyright &copy; 2014<span id="current_year"></span> by <a href="https://steve.kemp.fi/">Steve Kemp</a>
+  </div>
+  <div class="clear"> </div>
+</div>
+
+</div>
+<!-- Pure javascript, no jQuery -->
+<script type="text/javascript">
+ window.onload = function() {
+   // Get the year.
+   var yr = (new Date()).getFullYear();
+
+   // Update the document
+   var span = document.getElementById("current_year");
+   if ( span != null ) {
+     span.textContent = "-" + yr;
+   }
+ }
+</script>
+<script type="text/javascript">
+var KONAMI=function(e){var f,d,g,a,c,b;g={code:[38,38,40,40,37,39,37,39,66,65],cheat:null,elem:window};d={init:function(h){b=[],c={};if(h){for(var i in g){if(g.hasOwnProperty(i)){if(!h[i]){c[i]=g[i]}else{c[i]=h[i]}}}}else{c=g}d.bind(c.elem,"keyup",d.konami)},destroy:function(){d.unbind(c.elem,"keyup",d.konami);b=c=null},bind:function(j,h,i){if(j.addEventListener){j.addEventListener(h,i,false)}else{if(j.attachEvent){j.attachEvent("on"+h,function(k){i(k||window.event)})}}},unbind:function(j,h,i){if(j.removeEventListener){j.removeEventListener(h,i,false)}else{if(j.detachEvent){j.detachEvent("on"+h,function(k){i(k||window.event)})}}},konami:function(h){a=h.keyCode||h.which;if(c.code.length>b.push(a)){return}if(c.code.length<b.length){b.shift()}if(c.code.toString()!==b.toString()){return}c.cheat()}};d.init(e);return d};
+  var skx = { cheat : function() { window.location.assign("/view/konami") } };
+  var obj = new KONAMI( skx );
+</script>
+</body>
+</html>

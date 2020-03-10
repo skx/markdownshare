@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link type="image/x-icon" rel="icon" href="/favicon.ico" />
+<meta name="description" content="Quick and easy sharing of markdown text" />
+<meta name="keywords" content="markdown, pastebin, markdownsharing, sharing markdown" />
+<style>
+#include static/css/style.css
+</style>
+<link rel="author" href="/humans.txt" />
+<title>MarkdownShare : Page Not Found</title>
+</head>
+<body>
+<div id="wrap">
+<div id="header">
+<h1><a href="/">MarkdownShare.com</a></h1>
+<h2>Quick and easy sharing of markdown text</h2>
+</div>
+
+<div id="topmenu">
+<ul>
+<li><a href="/">Home</a></li>
+<li><a href="/api/">API</a></li>
+<li><a href="/create/">Create</a></li>
+<li><a href="/cheatsheet/">CheatSheet</a></li>
+<li><a href="/faq/">FAQ</a></li>
+</ul>
+<p style="border: 1px solid black; background: salmon !important; font-weight:bold;width:100%"><b>NOTE</b> This site will be going 100% read-only on 1st April 2020.  See <a href="/faq/">FAQ</a> for more details.</p>
+</div>
+
+<div id="content">
+      <h1>Page Not Found</h1>
+      <blockquote>
+        <p>The page/resource you requested could not be found.</p>
+      </blockquote>
+
+</div>
+<div class="clear"> </div>
+<div id="footer">
+  <div class="left">
+  </div>
+  <div class="right">
+    Copyright &copy; 2014<span id="current_year"></span> by <a href="https://steve.kemp.fi/">Steve Kemp</a>
+  </div>
+  <div class="clear"> </div>
+</div>
+
+</div>
+<!-- Pure javascript, no jQuery -->
+<script type="text/javascript">
+ window.onload = function() {
+   // Get the year.
+   var yr = (new Date()).getFullYear();
+
+   // Update the document
+   var span = document.getElementById("current_year");
+   if ( span != null ) {
+     span.textContent = "-" + yr;
+   }
+ }
+</script>
+<script type="text/javascript">
+#include static/js/k.js
+</script>
+
+</body>
+</html>

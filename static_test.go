@@ -15,7 +15,7 @@ import (
 //
 func TestResourceCount(t *testing.T) {
 	// expected count
-	cnt := 21
+	cnt := 23
 
 	// actual resources
 	out := getResources()
