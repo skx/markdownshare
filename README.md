@@ -16,7 +16,7 @@
 
 Markdownshare is the code which is behind [markdownshare.com](https://markdownshare.com/), which is essentially a pastebin site which happens to transform markdown into a HTML.
 
-The code on the `master` branch in this repository should always be stable and usable for all those who wish to self-host.  The _actual_ code which is deployed can be found in the `deploy` branch; there are minor differences largely as I go through the process of retiring and closing down the publicly-hosted instance of the service.
+The code on the `master` branch in this repository should always be stable and usable for all those who wish to self-host.  The _actual_ code which is deployed can be found in the [develop branch](https://github.com/skx/markdownshare/tree/develop); there are minor differences largely as I go through the process of retiring and closing down the publicly-hosted instance of the service.
 
 
 # Installation
