@@ -5,8 +5,6 @@
 
 * [markdownshare](#markdownshare)
 * [Installation](#installation)
-  * [Build without Go Modules (Go before 1.11)](#build-without-go-modules-go-before-111)
-  * [Build with Go Modules (Go 1.11 or higher)](#build-with-go-modules-go-111-or-higher)
 * [Usage](#usage)
 * [Storage](#storage)
 * [Rate-Limiting](#rate-limiting)
@@ -18,22 +16,17 @@
 
 Markdownshare is the code which is behind [markdownshare.com](https://markdownshare.com/), which is essentially a pastebin site which happens to transform markdown into a HTML.
 
+The code on the `master` branch in this repository should always be stable and usable for all those who wish to self-host.  The _actual_ code which is deployed can be found in the `deploy` branch; there are minor differences largely as I go through the process of retiring and closing down the publicly-hosted instance of the service.
+
 
 # Installation
 
-There are two ways to install this project from source, which depend on the version of the [go](https://golang.org/) version you're using.
+If you wish to install from source simply clone [this repository](https://github.com/skx/markdownshare), somewhere outside your GOPATH (if you even have one setup!) and run the standard commands:
+
+     go build .
+     go install .
 
 If you prefer you can fetch a binary from [our release page](https://github.com/skx/markdownshare/releases).
-
-## Build without Go Modules (Go before 1.11)
-
-    go get -u github.com/skx/markdownshare
-
-## Build with Go Modules (Go 1.11 or higher)
-
-    git clone https://github.com/skx/markdownshare ;# make sure to clone outside of GOPATH
-    cd markdownshare
-    go install
 
 
 ## Usage
@@ -42,13 +35,15 @@ Once installed like this you'll should find a `markdownshare` application.  The 
 
 To launch the server for real you'll want to run:
 
-     $ markdownshare serve [-host 127.0.0.1] [-port 3737]
+     $ markdownshare serve [-host 127.0.0.1] [-port 3737] [-redis localhost:6379]
+
+(Redis is only used to perform simple rate-limiting of incoming HTTP-accesses, it is entirely optional.)
 
 
 
 ## Storage
 
-Initially all user-data was stored in a local [Redis](https://redis.io/) database, but over time I've started to prefer to use redis only for transient/session-data - so the contents were moved to a local SQLite database.
+Initially all user-uploaded content was stored in a local [Redis](https://redis.io/) database, but over time I've started to prefer to use redis only for transient/session-data - so the contents were moved to a local SQLite database.
 
 Due to issues with embedding SQLite in golang I've now moved to storing data
 upon the filesystem, beneath a common prefix, which is slightly less efficient
@@ -59,8 +54,7 @@ but still good enough for the volume of users I see.
 
 The server has support for rate-limiting, you can enable this by passing the address of a [redis](https://redis.io/) server to the binary:
 
-      $ markdownshare  serve -redis=127.0.0.1:6379
-
+      $ markdownshare serve -redis=127.0.0.1:6379
 
 If this flag is not present then rate-limiting will be disabled.  If a client
 makes too many requests they will be returned a [HTTP 429 status-code](https://httpstatuses.com/429).  Each request made will return a series of headers
