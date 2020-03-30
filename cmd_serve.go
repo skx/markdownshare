@@ -949,6 +949,13 @@ func (p *serveCmd) Execute(_ context.Context, f *flag.FlagSet, _ ...interface{})
 	router.HandleFunc("/create/", create).Methods("POST")
 	router.HandleFunc("/create", create).Methods("POST")
 
+	if p.readOnly {
+		router.HandleFunc("/cheatsheet", create).Methods("GET")
+		router.HandleFunc("/cheatsheet/", create).Methods("GET")
+		router.HandleFunc("/api", create).Methods("GET")
+		router.HandleFunc("/api/", create).Methods("GET")
+	}
+
 	//
 	// Edit.
 	//
