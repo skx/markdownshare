@@ -15,7 +15,7 @@ import (
 //
 func TestResourceCount(t *testing.T) {
 	// expected count
-	cnt := 23
+	cnt := 21
 
 	// actual resources
 	out := getResources()
@@ -65,7 +65,7 @@ func TestResourceMatches(t *testing.T) {
 		// Test the data-matches
 		//
 		if string(master) != string(data) {
-			t.Errorf("Embedded and real resources have different content.")
+			t.Errorf("Embedded and real resources have different content: %s vs %s", master, data)
 		}
 	}
 }
